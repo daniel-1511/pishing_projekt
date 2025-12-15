@@ -17,3 +17,4 @@ def check_url(url: str):
         "status": result["status"],
         "details": result["details"]
     }
+print("DANIEL")
