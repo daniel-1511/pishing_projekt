@@ -3,25 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>CyberNet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: #f5f5f5;
-        }
-
-        h1 {
-            color: #333;
-        }
-
+        body { font-family: Arial, Helvetica, sans-serif; margin: 40px; background: #f5f5f5; }
+        h1 { color: #333; }
         input[type=text] {
-            width: 320px;
+            width: 100%;
+            max-width: 360px;
             padding: 10px;
-            margin-right: 10px;
+            margin-bottom: 10px;
             border-radius: 5px;
             border: 1px solid #ccc;
+            box-sizing: border-box;
         }
-
         button {
             padding: 10px 20px;
             border-radius: 5px;
@@ -30,11 +27,7 @@
             color: white;
             cursor: pointer;
         }
-
-        button:hover {
-            background: #0056b3;
-        }
-
+        button:hover { background: #0056b3; }
         .result {
             margin-top: 20px;
             padding: 20px;
@@ -42,34 +35,23 @@
             background: white;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-
         .danger { color: red; font-weight: bold; }
         .warning { color: orange; font-weight: bold; }
         .medium { color: goldenrod; font-weight: bold; }
         .safe { color: green; font-weight: bold; }
-
-        ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        li {
-            padding: 3px 0;
-        }
-
-        .error {
-            color: red;
-            font-weight: bold;
-            margin-top: 10px;
-        }
+        ul { list-style: none; padding-left: 0; }
+        li { padding: 4px 0; }
+        .error { color: red; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <h1>CyberNet – URL Security Check</h1>
 
-<form method="post" action="/check">
-    <input type="text" name="url" placeholder="https://example.com" required>
+<!-- Safari-kompatibel: enctype explizit setzen -->
+<form method="post" action="/check" accept-charset="UTF-8" enctype="application/x-www-form-urlencoded">
+    <input type="text" name="url" placeholder="https://example.com" required value="{{ url }}">
+    <br>
     <button type="submit">Check URL</button>
 </form>
 
@@ -79,7 +61,7 @@
 
 {% if result %}
 <div class="result">
-    <h2>Ergebnis für: {{ url }}</h2>
+    <h2>Ergebnis</h2>
 
     {% if result.color == 'red' %}
         <p>Status: <span class="danger">{{ result.status }}</span></p>

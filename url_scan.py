@@ -7,35 +7,28 @@ SUSPICIOUS_WORDS = [
     "confirm", "password"
 ]
 
-
 def check_https(url):
     return 0 if url.startswith("https://") else 25
-
 
 def check_ip(url):
     ip_pattern = r"(http://|https://)?(\d{1,3}\.){3}\d{1,3}"
     return 30 if re.search(ip_pattern, url) else 0
 
-
 def check_words(url):
     count = sum(word in url.lower() for word in SUSPICIOUS_WORDS)
     return count * 5
 
-
 def check_length(url):
     return 10 if len(url) > 75 else 0
-
 
 def check_symbols(url):
     dangerous = ["@", "-", "_"]
     return sum(url.count(sym) * 3 for sym in dangerous)
 
-
 def check_subdomain(url):
     parsed = urlparse(url)
     parts = parsed.netloc.split(".")
     return 15 if len(parts) > 3 else 0
-
 
 def scan_url(url):
     score = 100
