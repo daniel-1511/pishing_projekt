@@ -25,4 +25,3 @@ def check_url(request: Request, url: str = Form(...)):
         "index.html",
         {"request": request, "result": result, "url": url, "error": None}
     )
-print("FFFFF")
