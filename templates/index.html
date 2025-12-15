@@ -1,57 +1,106 @@
-<<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="de">
 <head>
-    <link rel="stylesheet" href="/static/style.css">
-    <title>Security Guard API</title>
+    <meta charset="UTF-8">
+    <title>CyberNet</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-        h1 { color: #333; }
-        input[type=text] { width: 300px; padding: 10px; margin-right: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; border-radius: 5px; border: none; background: #007BFF; color: white; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .result { margin-top: 20px; padding: 20px; border-radius: 10px; background: white; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        input[type=text] {
+            width: 320px;
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
         .danger { color: red; font-weight: bold; }
         .warning { color: orange; font-weight: bold; }
+        .medium { color: goldenrod; font-weight: bold; }
         .safe { color: green; font-weight: bold; }
-        ul { list-style: none; padding-left: 0; }
-        li { padding: 3px 0; }
-        .error { color: red; font-weight: bold; margin-top: 10px; }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        li {
+            padding: 3px 0;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>CyberNet</h1>
-    <form method="post" action="/check">
-        <input type="text" name="url" placeholder="https://example.com" required>
-        <button type="submit">Check URL</button>
-    </form>
 
-    {% if error %}
-        <p class="error">{{ error }}</p>
+<h1>CyberNet – URL Security Check</h1>
+
+<form method="post" action="/check">
+    <input type="text" name="url" placeholder="https://example.com" required>
+    <button type="submit">Check URL</button>
+</form>
+
+{% if error %}
+    <p class="error">{{ error }}</p>
+{% endif %}
+
+{% if result %}
+<div class="result">
+    <h2>Ergebnis für: {{ url }}</h2>
+
+    {% if result.color == 'red' %}
+        <p>Status: <span class="danger">{{ result.status }}</span></p>
+    {% elif result.color == 'orange' %}
+        <p>Status: <span class="warning">{{ result.status }}</span></p>
+    {% elif result.color == 'yellow' %}
+        <p>Status: <span class="medium">{{ result.status }}</span></p>
+    {% elif result.color == 'green' %}
+        <p>Status: <span class="safe">{{ result.status }}</span></p>
     {% endif %}
 
-    {% if result is not none %}
-    <div class="result">
-        <h2>Ergebnisse für: {{ url }}</h2>
+    <p><strong>Score:</strong> {{ result.score }} / 100</p>
 
-        {% if result.color == 'red' %}
-            <p>Status: <span class="danger">{{ result.status }}</span></p>
-        {% elif result.color == 'orange' %}
-            <p>Status: <span class="warning">{{ result.status }}</span></p>
-        {% else %}
-            <p>Status: <span class="safe">{{ result.status }}</span></p>
-        {% endif %}
+    <h3>Details:</h3>
+    <ul>
+        {% for key, value in result.details.items() %}
+            <li>{{ key }}: {{ value }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 
-        <h3>Details:</h3>
-        <ul>
-            {% for key, value in result.details.items() %}
-                <li>{{ key }}: {{ value }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-<h1> CyberNet Phishing URL Scanner</h1>
-<p class="subtitle">
-    Analyse von URLs auf Phishingrisiken
-</p>
 </body>
 </html>
