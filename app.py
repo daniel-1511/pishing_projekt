@@ -24,4 +24,4 @@ def check_url(request: Request, url: str = Form(...)):
     return templates.TemplateResponse(
         "index.html",
         {"request": request, "result": result, "url": url, "error": None}
-    )
+    )ll
