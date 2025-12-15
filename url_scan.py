@@ -65,3 +65,4 @@ def scan_url(url):
         "color": color,
         "details": deductions
     }
+p
