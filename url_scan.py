@@ -7,62 +7,53 @@ SUSPICIOUS_WORDS = [
     "confirm", "password"
 ]
 
-def check_https(url):
-    return 0 if url.startswith("https://") else 25
-
-def check_ip(url):
-    ip_pattern = r"(http://|https://)?(\d{1,3}\.){3}\d{1,3}"
-    return 30 if re.search(ip_pattern, url) else 0
-
-def check_words(url):
-    count = sum(word in url.lower() for word in SUSPICIOUS_WORDS)
-    return count * 5
-
-def check_length(url):
-    return 10 if len(url) > 75 else 0
-
-def check_symbols(url):
-    dangerous = ["@", "-", "_"]
-    return sum(url.count(sym) * 3 for sym in dangerous)
-
-def check_subdomain(url):
-    parsed = urlparse(url)
-    parts = parsed.netloc.split(".")
-    return 15 if len(parts) > 3 else 0
-
 def scan_url(url):
     score = 100
+    details = []
 
-    deductions = {
-        "HTTPS Check": check_https(url),
-        "IP-Adresse": check_ip(url),
-        "Verdächtige Wörter": check_words(url),
-        "URL Länge": check_length(url),
-        "Symbole": check_symbols(url),
-        "Subdomains": check_subdomain(url),
-    }
+    if not url.startswith("https://"):
+        score -= 25
+        details.append(("HTTPS fehlt", 25, "Daten können abgefangen werden"))
 
-    for value in deductions.values():
-        score -= value
+    if re.search(r"(http://|https://)?(\d{1,3}\.){3}\d{1,3}", url):
+        score -= 30
+        details.append(("IP-Adresse", 30, "IP-URLs werden oft für Phishing genutzt"))
+
+    found = [w for w in SUSPICIOUS_WORDS if w in url.lower()]
+    if found:
+        deduction = len(found) * 5
+        score -= deduction
+        details.append(("Verdächtige Wörter", deduction, f"Gefunden: {', '.join(found)}"))
+
+    if len(url) > 75:
+        score -= 10
+        details.append(("Lange URL", 10, "Lange URLs können täuschen"))
+
+    symbols = sum(url.count(s) for s in ["@", "-", "_"])
+    if symbols:
+        deduction = symbols * 3
+        score -= deduction
+        details.append(("Sonderzeichen", deduction, "Ungewöhnliche URL-Struktur"))
+
+    if len(urlparse(url).netloc.split(".")) > 3:
+        score -= 15
+        details.append(("Viele Subdomains", 15, "Imitiert oft echte Webseiten"))
 
     score = max(score, 0)
 
     if score <= 10:
-        status = "Extrem gefährlich"
-        color = "red"
+        status, color, width = "Extrem gefährlich", "red", "5%"
     elif score <= 30:
-        status = "Unsicher"
-        color = "orange"
+        status, color, width = "Unsicher", "orange", "25%"
     elif score <= 60:
-        status = "Relativ sicher"
-        color = "yellow"
+        status, color, width = "Relativ sicher", "yellow", "50%"
     else:
-        status = "Sicher"
-        color = "green"
+        status, color, width = "Sicher", "green", "80%"
 
     return {
         "score": score,
         "status": status,
         "color": color,
-        "details": deductions
+        "width": width,  # für CSS-Klassen / Balken
+        "details": details
     }

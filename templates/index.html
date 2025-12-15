@@ -1,88 +1,114 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>CyberNet</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<meta charset="UTF-8">
+<title>CyberNet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body { font-family: Arial, Helvetica, sans-serif; margin: 40px; background: #f5f5f5; }
-        h1 { color: #333; }
-        input[type=text] {
-            width: 100%;
-            max-width: 360px;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-        button {
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: none;
-            background: #007BFF;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover { background: #0056b3; }
-        .result {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 10px;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .danger { color: red; font-weight: bold; }
-        .warning { color: orange; font-weight: bold; }
-        .medium { color: goldenrod; font-weight: bold; }
-        .safe { color: green; font-weight: bold; }
-        ul { list-style: none; padding-left: 0; }
-        li { padding: 4px 0; }
-        .error { color: red; font-weight: bold; margin-top: 10px; }
-    </style>
+<style>
+:root {
+    --bg: #f5f5f5;
+    --box: #ffffff;
+    --text: #000000;
+}
+
+body.dark {
+    --bg: #121212;
+    --box: #1e1e1e;
+    --text: #f5f5f5;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 40px;
+}
+
+.box {
+    background-color: var(--box);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+button {
+    padding: 8px 14px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.bar {
+    width: 100%;
+    background-color: #cccccc;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.bar-inner {
+    height: 20px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 12px;
+}
+
+/* feste Klassen für Score-Balken (VS Code freundlich) */
+.bar-inner.red { width: 5%; background-color: red; }
+.bar-inner.orange { width: 25%; background-color: orange; }
+.bar-inner.yellow { width: 50%; background-color: goldenrod; }
+.bar-inner.green { width: 80%; background-color: green; }
+</style>
+
+<script>
+function toggleDark() {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("darkmode", document.body.classList.contains("dark"));
+}
+
+window.onload = function () {
+    if (localStorage.getItem("darkmode") === "true") {
+        document.body.classList.add("dark");
+    }
+};
+</script>
 </head>
+
 <body>
+<div class="box">
+    <h1>CyberNet 🔐</h1>
 
-<h1>CyberNet – URL Security Check</h1>
+    <button onclick="toggleDark()">🌙 / ☀️ Dark Mode</button>
 
-<!-- Safari-kompatibel: enctype explizit setzen -->
-<form method="post" action="/check" accept-charset="UTF-8" enctype="application/x-www-form-urlencoded">
-    <input type="text" name="url" placeholder="https://example.com" required value="{{ url }}">
-    <br>
-    <button type="submit">Check URL</button>
-</form>
+    <form method="post" action="/check">
+        <input type="text" name="url" placeholder="https://example.com" required>
+        <button type="submit">Prüfen</button>
+    </form>
 
-{% if error %}
-    <p class="error">{{ error }}</p>
-{% endif %}
-
-{% if result %}
-<div class="result">
-    <h2>Ergebnis</h2>
-
-    {% if result.color == 'red' %}
-        <p>Status: <span class="danger">{{ result.status }}</span></p>
-    {% elif result.color == 'orange' %}
-        <p>Status: <span class="warning">{{ result.status }}</span></p>
-    {% elif result.color == 'yellow' %}
-        <p>Status: <span class="medium">{{ result.status }}</span></p>
-    {% elif result.color == 'green' %}
-        <p>Status: <span class="safe">{{ result.status }}</span></p>
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
     {% endif %}
 
-    <p><strong>Score:</strong> {{ result.score }} / 100</p>
+    {% if result %}
+        <h2>Status: {{ result.status }}</h2>
 
-    <h3>Details:</h3>
-    <ul>
-        {% for key, value in result.details.items() %}
-            <li>{{ key }}: {{ value }}</li>
+        <!-- Score-Balken (Feature 3) -->
+        <div class="bar">
+            <div class="bar-inner {{ result.color }}">
+                {{ result.score }}%
+            </div>
+        </div>
+
+        <!-- Erklär-Modus (Feature 5) -->
+        <h3>Warum?</h3>
+        <ul>
+        {% for name, points, reason in result.details %}
+            <li>
+                ❌ <strong>{{ name }}</strong> (-{{ points }})<br>
+                <small>{{ reason }}</small>
+            </li>
         {% endfor %}
-    </ul>
+        </ul>
+    {% endif %}
 </div>
-{% endif %}
-
 </body>
 </html>
