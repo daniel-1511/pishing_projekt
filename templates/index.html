@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Guard API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        input[type=text] { width: 300px; padding: 5px; }
+        button { padding: 5px 10px; }
+        .result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+        .danger { color: red; font-weight: bold; }
+        .safe { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>URL Security Check</h1>
+    <form method="post" action="/check">
+        <input type="text" name="url" placeholder="https://example.com" required>
+        <button type="submit">Check URL</button>
+    </form>
+
+    {% if error %}
+        <p class="danger">{{ error }}</p>
+    {% endif %}
+
+    {% if result %}
+    <div class="result">
+        <h2>Ergebnisse für: {{ url }}</h2>
+        <p>Status: <span class="{% if result.score <= 30 %}danger{% else %}safe{% endif %}">{{ result.status }}</span></p>
+        <p>Score: {{ result.score }}</p>
+        <h3>Details:</h3>
+        <ul>
+            {% for key, value in result.details.items() %}
+            <li>{{ key }}: {{ value }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</body>
+</html>
