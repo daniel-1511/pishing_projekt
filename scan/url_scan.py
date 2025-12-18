@@ -1,3 +1,15 @@
+import re
+import requests
+from urllib.parse import urlparse
+from bs4 import BeautifulSoup
+
+SUSPICIOUS_WORDS = [
+    "login", "verify", "secure", "bank",
+    "account", "update", "free", "bonus",
+    "confirm", "password"
+]
+
+
 def scan_url(url):
     score = 100
     details = []
