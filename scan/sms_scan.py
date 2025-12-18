@@ -13,102 +13,156 @@ PHISHING_KEYWORDS: Dict[str, List[str]] = {
         "mutter", "vater",
         "sohn", "tochter", "bruder", "schwester",
         "oma", "opa",
-        "neue nummer", "neue handynummer",
-        "handy kaputt", "kann nicht telefonieren",
-        "bitte hilf mir", "ich brauche geld",
-        "melde dich"
+        "neue nummer", "handy kaputt",
+        "bitte hilf mir", "ich brauche geld"
     ],
 
     "geld": [
-        "überweis", "überweisung", "zahlung", "zahlen", "bezahlen",
-        "geld", "betrag", "rechnung", "mahnung",
-        "paypal", "klarna", "sofortüberweisung"
+        "überweis", "überweisung", "zahlung",
+        "zahlen", "bezahlen", "geld",
+        "betrag", "rechnung", "paypal"
     ],
 
     "bank": [
-        "bank", "konto", "iban", "login", "verifizieren",
-        "bestätigen", "gesperrt", "passwort", "pin", "tan"
+        "bank", "konto", "iban",
+        "login", "verifizieren",
+        "passwort", "pin", "tan", "code"
+    ],
+
+    "gewinn": [
+        "gewonnen", "gewinn", "preis",
+        "jackpot", "lotterie",
+        "gutschein", "bonus", "belohnung"
+    ],
+
+    "gratis": [
+        "gratis", "kostenlos", "free",
+        "umsonst", "geschenk", "0€"
     ],
 
     "druck": [
-        "dringend", "sofort", "jetzt", "heute",
-        "letzte chance", "24 stunden", "umgehend"
+        "dringend", "sofort", "jetzt",
+        "letzte chance", "heute", "frist"
     ],
 
     "link": [
-        "hier klicken", "klick hier", "link öffnen"
+        "hier klicken", "klick hier",
+        "jetzt bestätigen"
     ]
 }
 
 # =====================================================
-# SMS SCANNER
+# HILFSFUNKTIONEN
+# =====================================================
+
+def keyword_found(text: str, keyword: str) -> bool:
+    if " " in keyword:
+        return keyword in text
+    return re.search(rf"\b{re.escape(keyword)}\b", text) is not None
+
+
+def highlight_suspicious_words(text: str, found: Dict[str, List[str]]) -> str:
+    highlighted = text
+    for words in found.values():
+        for word in sorted(words, key=len, reverse=True):
+            highlighted = re.sub(
+                re.escape(word),
+                r"<mark>\g<0></mark>",
+                highlighted,
+                flags=re.IGNORECASE
+            )
+    return highlighted
+
+# =====================================================
+# SMS-ANALYSE
 # =====================================================
 
 def scan_sms(sms_text: str) -> Dict:
     score = 100
     details = []
-    warnings = []
-    sms_lower = sms_text.lower()
 
+    sms_lower = sms_text.lower()
     found = {category: [] for category in PHISHING_KEYWORDS}
 
-    # 🔍 Schlüsselwörter finden
+    # 🔍 Keywords finden
     for category, words in PHISHING_KEYWORDS.items():
         for word in words:
-            if re.search(rf"\b{re.escape(word)}\b", sms_lower):
+            if keyword_found(sms_lower, word):
                 found[category].append(word)
 
-    # 🚨 Familienbezug
+    highlighted_text = highlight_suspicious_words(sms_text, found)
+
+    # =================================================
+    # 🚨 FAMILIE
+    # =================================================
+
+    family_verification = {
+        "active": False,
+        "title": "",
+        "steps_before_reply": [],
+        "analysis": ""
+    }
+
     if found["familie"]:
-        score -= 40
-        details.append((
-            "Familienbezug erkannt",
-            40,
-            f"Begriffe: {', '.join(found['familie'])}"
-        ))
-
-        warnings.append(
-            "⚠️ In dieser Nachricht werden Familienmitglieder erwähnt.\n"
-            "Gehe besonders vorsichtig vor:\n"
-            "- Antworte NICHT direkt auf diese Nachricht\n"
-            "- Kontaktiere die Person über eine bereits gespeicherte Nummer\n"
-            "- Frage ein anderes Familienmitglied, ob die Nachricht echt ist\n"
-            "- Überweise kein Geld und teile keine Codes"
+        family_verification["active"] = True
+        family_verification["title"] = "Hinweis: Familienbezug erkannt"
+        family_verification["analysis"] = (
+            "SMS mit Familienbezug werden häufig für Betrug missbraucht."
         )
+        family_verification["steps_before_reply"] = [
+            "Nicht direkt antworten",
+            "Person über gespeicherte Nummer anrufen",
+            "Kein Geld überweisen",
+            "Keine Codes weitergeben"
+        ]
 
-    # 🚨 Familie + Geld
+        score -= 40
+        details.append(("Familienbezug", 40, ", ".join(found["familie"])))
+
     if found["familie"] and found["geld"]:
         score -= 30
+        details.append(("Familie + Geld", 30, "Sehr hohes Risiko"))
+
+    # =================================================
+    # 🎁 GEWINN / GRATIS → IMMER −50
+    # =================================================
+
+    if found["gewinn"] or found["gratis"]:
+        score -= 50
         details.append((
-            "Familien-Geld-Kombination",
-            30,
-            "Sehr typisches Betrugsmuster (Hallo‑Mama/Papa‑Betrug)"
+            "Gewinn- oder Gratisversprechen",
+            50,
+            "Typisches Betrugsmuster"
         ))
 
-    # 🔗 Links
+    # Verstärkung bei Druck
+    if (found["gewinn"] or found["gratis"]) and found["druck"]:
+        score -= 20
+        details.append((
+            "Zeitdruck",
+            20,
+            "Erhöhtes Risiko durch Dringlichkeit"
+        ))
+
+    # =================================================
+    # 🔗 LINK
+    # =================================================
+
     if re.search(r"(https?://|www\.)", sms_lower):
         score -= 25
-        details.append(("Link", 25, "Verdächtiger Link gefunden"))
+        details.append(("Link erkannt", 25, "Externer Link enthalten"))
 
     # 🔢 Zahlencodes
     if re.search(r"\b\d{5,}\b", sms_text):
         score -= 15
-        details.append(("Code", 15, "Langer Zahlencode gefunden"))
-
-    # 🔎 Allgemeine Schlüsselwörter
-    total_keywords = sum(len(v) for v in found.values())
-    if total_keywords:
-        deduction = min(total_keywords * 3, 35)
-        score -= deduction
-        details.append((
-            "Phishing-Muster",
-            deduction,
-            f"Anzahl erkannter Muster: {total_keywords}"
-        ))
+        details.append(("Zahlencode", 15, "Verdächtige Zahlenfolge"))
 
     score = max(score, 0)
 
-    # 🚦 Status
+    # =================================================
+    # 🚦 STATUS
+    # =================================================
+
     if score < 30:
         status = "GEFÄHRLICH"
         color = "red"
@@ -119,23 +173,31 @@ def scan_sms(sms_text: str) -> Dict:
         status = "UNGEFÄHRLICH"
         color = "green"
 
+    # ❗ Gewinn/Gratis NIE sicher
+    if (found["gewinn"] or found["gratis"]) and status == "UNGEFÄHRLICH":
+        status = "POTENTIELL GEFÄHRLICH"
+        color = "orange"
+
+    # ❗ Familie NIE sicher
+    if family_verification["active"] and status == "UNGEFÄHRLICH":
+        status = "POTENTIELL GEFÄHRLICH"
+        color = "orange"
+
     return {
         "score": score,
         "status": status,
         "color": color,
         "details": details,
-        "warnings": warnings
+        "highlighted_text": highlighted_text,
+        "family_verification": family_verification
     }
 
 # =====================================================
-# DEMO
+# TEST
 # =====================================================
 
 if __name__ == "__main__":
-    sms = "Hallo Mama, mein Handy ist kaputt. Bitte überweis mir sofort 800€."
+    sms = "Glückwunsch! Sie haben einen GRATIS Gutschein gewonnen. Jetzt hier klicken!"
     result = scan_sms(sms)
-
-    print("SMS:", sms)
-    print("\nBewertung:")
     for k, v in result.items():
         print(f"{k}: {v}")

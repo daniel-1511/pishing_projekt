@@ -163,8 +163,6 @@ window.onload = function () {
             </div>
         </div>
 
-        <p>Kurze Erklärung: {% if url_result.score >= 60 %}Die Webseite sieht auf den ersten Blick sicher aus.{% else %}Diese Webseite könnte riskant sein. Schau dir die Details an.{% endif %}</p>
-
         <details open>
             <summary><strong>🔍 Details</strong></summary>
             <ul>
@@ -173,28 +171,6 @@ window.onload = function () {
             {% endfor %}
             </ul>
         </details>
-
-        {% if url_result.website_analysis %}
-        <details>
-            <summary><strong>🌐 Website Analyse</strong></summary>
-            <p><strong>HTTP-Status:</strong> {{ url_result.website_analysis.http_status }}</p>
-            {% if url_result.website_analysis.errors %}
-                <h4>❌ Fehler</h4>
-                <ul>{% for e in url_result.website_analysis.errors %}<li>{{ e }}</li>{% endfor %}</ul>
-            {% endif %}
-            {% if url_result.website_analysis.warnings %}
-                <h4>⚠️ Warnungen</h4>
-                <ul>{% for w in url_result.website_analysis.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
-            {% endif %}
-        </details>
-        {% endif %}
-
-        {% if url_result.html_errors %}
-        <details>
-            <summary><strong>🧱 HTML-Fehler (W3C)</strong></summary>
-            <ul>{% for err in url_result.html_errors %}<li>{{ err }}</li>{% endfor %}</ul>
-        </details>
-        {% endif %}
     {% endif %}
 </div>
 
@@ -213,6 +189,19 @@ window.onload = function () {
                 {{ sms_result.score }}%
             </div>
         </div>
+
+        <!-- ℹ️ Familien-Hinweis (neutral, aufklappbar) -->
+        {% if sms_result.family_verification.active %}
+        <details>
+            <summary>{{ sms_result.family_verification.title }}</summary>
+            <p>{{ sms_result.family_verification.analysis }}</p>
+            <ul>
+                {% for step in sms_result.family_verification.steps_before_reply %}
+                    <li>{{ step }}</li>
+                {% endfor %}
+            </ul>
+        </details>
+        {% endif %}
 
         <details open>
             <summary><strong>📋 Analyse</strong></summary>
@@ -242,15 +231,6 @@ window.onload = function () {
                 {{ email_result.score }}%
             </div>
         </div>
-
-        <details open>
-            <summary><strong>📋 Analyse</strong></summary>
-            <ul>
-            {% for name, points, reason in email_result.details %}
-                <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
-            {% endfor %}
-            </ul>
-        </details>
     {% endif %}
 </div>
 
@@ -269,15 +249,6 @@ window.onload = function () {
                 {{ phone_result.score }}%
             </div>
         </div>
-
-        <details open>
-            <summary><strong>📋 Analyse</strong></summary>
-            <ul>
-            {% for name, points, reason in phone_result.details %}
-                <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
-            {% endfor %}
-            </ul>
-        </details>
     {% endif %}
 </div>
 
