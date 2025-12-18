@@ -10,6 +10,9 @@
     --bg: #f5f5f5;
     --box: #ffffff;
     --text: #000000;
+    --menu-bg: #121212;
+    --menu-text: #ffffff;
+    --accent-color: #2196F3;
 }
 
 body.dark {
@@ -23,6 +26,7 @@ body {
     background-color: var(--bg);
     color: var(--text);
     padding: 40px;
+    transition: background-color 0.5s, color 0.5s;
 }
 
 .box {
@@ -57,12 +61,78 @@ button {
 .bar-inner.yellow { width: 50%; background-color: goldenrod; }
 .bar-inner.green { width: 80%; background-color: green; }
 
-.toggle-container {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+details {
+    margin-top: 10px;
 }
 
+/* Header Styling */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--box);
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.menu-icon {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.menu-icon div {
+    width: 25px;
+    height: 3px;
+    background-color: var(--text);
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+/* Seitliches Menü Styling */
+.side-menu {
+    position: fixed;
+    top: 0;
+    right: -250px; /* Ausgeblendetes Menü */
+    height: 100%;
+    width: 250px;
+    background-color: var(--menu-bg);
+    color: var(--menu-text);
+    box-shadow: -4px 0px 6px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    transition: right 0.5s;
+    padding: 20px;
+}
+
+.side-menu ul {
+    list-style: none;
+    padding: 0;
+}
+
+.side-menu li {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.side-menu li a {
+    color: var(--menu-text);
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+.side-menu hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid var(--menu-text);
+}
+
+/* Toggle-Switch */
 .switch {
     position: relative;
     display: inline-block;
@@ -98,19 +168,23 @@ button {
 }
 
 input:checked + .slider {
-    background-color: #2196F3;
+    background-color: var(--accent-color);
 }
 
 input:checked + .slider:before {
     transform: translateX(24px);
 }
-
-details {
-    margin-top: 10px;
-}
 </style>
 
 <script>
+/* Öffnen und Schließen des Menüs */
+function toggleMenu() {
+    const menu = document.getElementById("sideMenu");
+    const rightPosition = menu.style.right;
+    menu.style.right = rightPosition === "0px" ? "-250px" : "0px";
+}
+
+/* Dark-/Light-Mode aktivieren */
 function toggleDark() {
     document.body.classList.toggle("dark");
     localStorage.setItem("darkmode", document.body.classList.contains("dark"));
@@ -118,101 +192,51 @@ function toggleDark() {
 
 window.onload = function () {
     const toggle = document.getElementById('darkModeToggle');
-
     if (localStorage.getItem("darkmode") === "true") {
         document.body.classList.add("dark");
         toggle.checked = true;
     }
-
     toggle.addEventListener('change', toggleDark);
 };
 </script>
 </head>
 
 <body>
-
-<div class="toggle-container">
-    <label class="switch">
-        <input type="checkbox" id="darkModeToggle">
-        <span class="slider"></span>
-    </label>
-</div>
-
-<div class="box">
-    <h1>CyberNet 🔐</h1>
-
-    <form method="post" action="/check">
-        <input type="text" name="url" placeholder="https://example.com" required>
-        <button type="submit">Prüfen</button>
-    </form>
-
-    {% if error %}
-        <p style="color:red;">{{ error }}</p>
-    {% endif %}
-
-    {% if result %}
-        <h2>Status: {{ result.status }}</h2>
-
-        <div class="bar">
-            <div class="bar-inner {{ result.color }}">
-                {{ result.score }}%
-            </div>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">CyberNet</div>
+        <div class="menu-icon" onclick="toggleMenu()">
+            <!-- Hamburger-Menü (drei Striche) -->
+            <div></div>
+            <div></div>
+            <div></div>
         </div>
+    </header>
 
-        <!-- Sicherheitsdetails -->
-        <details open>
-            <summary><strong>🔍 Sicherheitsanalyse</strong></summary>
-            <ul>
-            {% for name, points, reason in result.details %}
-                <li>
-                    ❌ <strong>{{ name }}</strong> (-{{ points }})<br>
-                    <small>{{ reason }}</small>
-                </li>
-            {% endfor %}
-            </ul>
-        </details>
+    <!-- Seitliches Menü -->
+    <nav class="side-menu" id="sideMenu">
+        <ul>
+            <li><a href="#">Settings</a></li>
+            <li><a href="#">Help</a></li>
+            <hr>
+            <li>
+                <label class="switch">
+                    <input type="checkbox" id="darkModeToggle">
+                    <span class="slider"></span>
+                </label>
+            </li>
+        </ul>
+    </nav>
 
-        <!-- Website Analyse -->
-        {% if result.website_analysis %}
-        <details>
-            <summary><strong>🌐 Website-Analyse</strong></summary>
-
-            <p><strong>HTTP-Status:</strong> {{ result.website_analysis.http_status }}</p>
-
-            {% if result.website_analysis.errors %}
-                <h4>❌ Fehler</h4>
-                <ul>
-                {% for e in result.website_analysis.errors %}
-                    <li>{{ e }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-
-            {% if result.website_analysis.warnings %}
-                <h4>⚠️ Warnungen</h4>
-                <ul>
-                {% for w in result.website_analysis.warnings %}
-                    <li>{{ w }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-        </details>
-        {% endif %}
-
-        <!-- HTML Fehler -->
-        {% if result.html_errors %}
-        <details>
-            <summary><strong>🧱 HTML-Code-Fehler (W3C)</strong></summary>
-            <ul>
-            {% for err in result.html_errors %}
-                <li>{{ err }}</li>
-            {% endfor %}
-            </ul>
-        </details>
-        {% endif %}
-
-    {% endif %}
-</div>
-
+    <!-- Hauptinhalt -->
+    <main class="main-content">
+        <div class="box">
+            <h1>Gib einen Link ein und prüfe ihn</h1>
+            <form method="post" action="/check">
+                <input type="url" name="url" placeholder="https://example.com" required>
+                <button type="submit">Prüfen</button>
+            </form>
+        </div>
+    </main>
 </body>
 </html>

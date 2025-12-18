@@ -1,3 +1,4 @@
+/* Allgemeines Styling */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -14,12 +15,14 @@ body {
     color: #ffffff;
 }
 
+/* Container für Toggle (Ursprünglich bestehend) */
 .container {
     position: absolute;
     top: 10px;
     right: 10px;
 }
 
+/* Switch Design */
 .switch {
     position: relative;
     display: inline-block;
@@ -63,4 +66,81 @@ input:checked + .slider {
 
 input:checked + .slider:before {
     transform: translateX(24px);
+}
+
+/* Header Styling */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--bg);
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: inherit;
+}
+
+/* Hamburger-Menü Styling */
+.menu-icon {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.menu-icon div {
+    width: 25px;
+    height: 3px;
+    background-color: inherit;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+/* Seitliches Menü Styling */
+.side-menu {
+    position: fixed;
+    top: 0;
+    right: -250px; /* Menü unsichtbar */
+    height: 100%;
+    width: 250px;
+    background-color: #121212; /* Dunkles Menü */
+    color: #ffffff;
+    box-shadow: -4px 0px 6px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    transition: right 0.5s;
+    padding: 20px;
+    z-index: 1000; /* Menü über anderen Elementen */
+}
+
+.side-menu ul {
+    list-style: none;
+    padding: 0;
+}
+
+.side-menu li {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.side-menu li a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+.side-menu hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid #ffffff;
+}
+
+/* Styling für Switch innerhalb des Menüs */
+.side-menu .switch {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
 }
