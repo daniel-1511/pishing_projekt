@@ -1,11 +1,9 @@
 import re
 import requests
-import analyze_website
-import validate_html
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
-
+# --- Verdächtige Wörter ---
 SUSPICIOUS_WORDS = [
     "login", "verify", "secure", "bank",
     "account", "update", "free", "bonus",
@@ -13,11 +11,84 @@ SUSPICIOUS_WORDS = [
 ]
 
 
+# --- Website Analyse ---
+def analyze_website(url):
+    results = {
+        "reachable": True,
+        "http_status": None,
+        "errors": [],
+        "warnings": []
+    }
+
+    try:
+        response = requests.get(url, timeout=10)
+        results["http_status"] = response.status_code
+
+        if response.status_code >= 400:
+            results["errors"].append(f"HTTP-Fehler {response.status_code}")
+            results["reachable"] = False
+            return results
+
+        html = response.text
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Fehlender <title>
+        if not soup.title or not soup.title.text.strip():
+            results["errors"].append("Kein <title>-Tag vorhanden")
+
+        # Fehlende Meta Description
+        if not soup.find("meta", attrs={"name": "description"}):
+            results["warnings"].append("Meta Description fehlt")
+
+        # Mehrere H1-Tags
+        if len(soup.find_all("h1")) > 1:
+            results["warnings"].append("Mehrere <h1>-Tags gefunden")
+
+        # Inline-JavaScript
+        if soup.find_all("script", src=False):
+            results["warnings"].append("Inline-JavaScript gefunden")
+
+        # Mixed Content (HTTP Ressourcen auf HTTPS)
+        if url.startswith("https://"):
+            for img in soup.find_all("img", src=True):
+                if img["src"].startswith("http://"):
+                    results["errors"].append("Mixed Content (HTTP-Ressourcen)")
+
+    except requests.exceptions.RequestException as e:
+        results["reachable"] = False
+        results["errors"].append(f"Seite nicht erreichbar: {str(e)}")
+
+    return results
+
+
+# --- HTML Validator (W3C) ---
+def validate_html(url):
+    errors = []
+
+    try:
+        api_url = "https://validator.w3.org/nu/"
+        params = {"doc": url, "out": "json"}
+        response = requests.get(api_url, params=params, timeout=10)
+        data = response.json()
+
+        for msg in data.get("messages", []):
+            if msg.get("type") == "error":
+                line = msg.get("lastLine", "?")
+                message = msg.get("message", "Unbekannter HTML-Fehler")
+                errors.append(f"Zeile {line}: {message}")
+
+    except Exception as e:
+        errors.append(f"HTML-Validierung fehlgeschlagen: {str(e)}")
+
+    return errors
+
+
+# --- Hauptfunktion: URL-Scan ---
 def scan_url(url):
     score = 100
     details = []
 
-    # --- DEIN CODE (unverändert) ---
+    # --- URL Sicherheitschecks ---
     if not url.startswith("https://"):
         score -= 25
         details.append(("HTTPS fehlt", 25, "Daten können abgefangen werden"))
@@ -46,7 +117,7 @@ def scan_url(url):
         score -= 15
         details.append(("Viele Subdomains", 15, "Imitiert oft echte Webseiten"))
 
-    # --- NEU: WEBSITE ANALYSE ---
+    # --- Website Analyse ---
     website = analyze_website(url)
 
     if not website["reachable"]:
@@ -60,7 +131,7 @@ def scan_url(url):
     for warn in website["warnings"]:
         details.append(("Website-Warnung", 0, warn))
 
-    # --- HTML VALIDIERUNG ---
+    # --- HTML Validator ---
     html_errors = validate_html(url)
     for err in html_errors:
         score -= 3
@@ -68,6 +139,7 @@ def scan_url(url):
 
     score = max(score, 0)
 
+    # --- Status / Score Balken ---
     if score <= 10:
         status, color, width = "Extrem gefährlich", "red", "5%"
     elif score <= 30:
@@ -86,3 +158,11 @@ def scan_url(url):
         "website_analysis": website,
         "html_errors": html_errors
     }
+
+
+# --- Direkt testen ---
+if __name__ == "__main__":
+    url = "https://example.com"
+    result = scan_url(url)
+    from pprint import pprint
+    pprint(result)
