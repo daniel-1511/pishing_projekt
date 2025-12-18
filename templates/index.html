@@ -243,13 +243,26 @@ window.onload = function () {
     </form>
 
     {% if phone_result %}
-        <h3>Status: {{ phone_result.status }}</h3>
-        <div class="bar">
-            <div class="bar-inner {% if phone_result.score <= 10 %}red{% elif phone_result.score <= 30 %}orange{% elif phone_result.score <= 60 %}yellow{% else %}green{% endif %}">
-                {{ phone_result.score }}%
-            </div>
+    <h3>Status: {{ phone_result.status }}</h3>
+
+    <div class="bar">
+        <div class="bar-inner {% if phone_result.score <= 10 %}red{% elif phone_result.score <= 30 %}orange{% elif phone_result.score <= 60 %}yellow{% else %}green{% endif %}">
+            {{ phone_result.score }}%
         </div>
+    </div>
+
+    {% if phone_result.details %}
+    <details open>
+        <summary><strong>🔍 Analyse</strong></summary>
+        <ul>
+        {% for name, points, reason in phone_result.details %}
+            <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        {% endfor %}
+        </ul>
+    </details>
     {% endif %}
+{% endif %}
+
 </div>
 
 </body>
