@@ -1,4 +1,4 @@
-//Light Dark Mode Toggle Switch
+//Light Dark Mode Toggle Switch 
 document.addEventListener("DOMContentLoaded", function () {
     const toggle = document.querySelector("#darkModeToggle");
     const body = document.body;
