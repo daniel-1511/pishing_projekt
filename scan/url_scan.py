@@ -1,7 +1,10 @@
 import re
 import requests
+import analyze_website
+import validate_html
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+
 
 SUSPICIOUS_WORDS = [
     "login", "verify", "secure", "bank",
@@ -44,7 +47,7 @@ def scan_url(url):
         details.append(("Viele Subdomains", 15, "Imitiert oft echte Webseiten"))
 
     # --- NEU: WEBSITE ANALYSE ---
-    website = CyberNet(url)
+    website = analyze_website(url)
 
     if not website["reachable"]:
         score -= 40
