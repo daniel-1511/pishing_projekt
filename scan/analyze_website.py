@@ -1,12 +1,22 @@
 import requests
 from bs4 import BeautifulSoup
+import traceback
 
-def analyze_website(url):
+# 🔞 NSFW / Erwachsenen-Inhalte
+NSFW_KEYWORDS = ["porn", "xxx", "sex", "adult", "nude", "camgirl", "escort"]
+
+# 🎰 Glücksspiel / Casino
+CASINO_KEYWORDS = ["casino", "bet", "poker", "slot", "jackpot", "gambling", "roulette"]
+
+def analyze_website(url, debug=False):
     results = {
         "reachable": True,
         "http_status": None,
         "errors": [],
-        "warnings": []
+        "warnings": [],
+        "nsfw": False,
+        "casino": False,
+        "exceptions": []
     }
 
     try:
@@ -14,13 +24,11 @@ def analyze_website(url):
         results["http_status"] = response.status_code
 
         if response.status_code >= 400:
-            results["errors"].append(
-                f"HTTP-Fehler {response.status_code}"
-            )
+            results["errors"].append(f"HTTP-Fehler {response.status_code}")
             results["reachable"] = False
             return results
 
-        html = response.text
+        html = response.text.lower()
         soup = BeautifulSoup(html, "html.parser")
 
         # ❌ Fehlender <title>
@@ -45,8 +53,28 @@ def analyze_website(url):
                 if img["src"].startswith("http://"):
                     results["errors"].append("Mixed Content (HTTP-Ressourcen)")
 
+        # 🔞 NSFW erkennen
+        if any(word in html for word in NSFW_KEYWORDS):
+            results["nsfw"] = True
+            results["warnings"].append("NSFW / Inhalte für Erwachsene gefunden")
+
+        # 🎰 Casino erkennen
+        if any(word in html for word in CASINO_KEYWORDS):
+            results["casino"] = True
+            results["warnings"].append("Casino / Glücksspiel-Inhalte gefunden")
+
     except requests.exceptions.RequestException as e:
         results["reachable"] = False
         results["errors"].append(f"Seite nicht erreichbar: {str(e)}")
+
+    except Exception as e:
+        results["reachable"] = False
+        results["errors"].append(f"Analyse fehlgeschlagen: {str(e)}")
+        if debug:
+            results["exceptions"].append({
+                "type": type(e).__name__,
+                "message": str(e),
+                "traceback": traceback.format_exc()
+            })
 
     return results

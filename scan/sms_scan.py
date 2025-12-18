@@ -1,46 +1,141 @@
 import re
+from typing import Dict, List
 
-SUSPICIOUS_KEYWORDS = ["gewonnen", "preis", "bank", "konto", "loggen", "hier klicken", "verifizieren"]
+# =====================================================
+# PHISHING-SCHLÜSSELWÖRTER
+# =====================================================
 
-def scan_sms(sms_text):
+PHISHING_KEYWORDS: Dict[str, List[str]] = {
+
+    "familie": [
+        "hallo mama", "hallo papa",
+        "mama", "papa", "mutti", "vati",
+        "mutter", "vater",
+        "sohn", "tochter", "bruder", "schwester",
+        "oma", "opa",
+        "neue nummer", "neue handynummer",
+        "handy kaputt", "kann nicht telefonieren",
+        "bitte hilf mir", "ich brauche geld",
+        "melde dich"
+    ],
+
+    "geld": [
+        "überweis", "überweisung", "zahlung", "zahlen", "bezahlen",
+        "geld", "betrag", "rechnung", "mahnung",
+        "paypal", "klarna", "sofortüberweisung"
+    ],
+
+    "bank": [
+        "bank", "konto", "iban", "login", "verifizieren",
+        "bestätigen", "gesperrt", "passwort", "pin", "tan"
+    ],
+
+    "druck": [
+        "dringend", "sofort", "jetzt", "heute",
+        "letzte chance", "24 stunden", "umgehend"
+    ],
+
+    "link": [
+        "hier klicken", "klick hier", "link öffnen"
+    ]
+}
+
+# =====================================================
+# SMS SCANNER
+# =====================================================
+
+def scan_sms(sms_text: str) -> Dict:
     score = 100
     details = []
+    warnings = []
+    sms_lower = sms_text.lower()
 
-    if len(sms_text) > 160:
-        deduction = 10
-        score -= deduction
-        details.append(("Länge der Nachricht", deduction, "Nachricht ist länger als normale SMS."))
+    found = {category: [] for category in PHISHING_KEYWORDS}
 
-    found_keywords = [word for word in SUSPICIOUS_KEYWORDS if word in sms_text.lower()]
-    if found_keywords:
-        deduction = len(found_keywords) * 5
-        score -= deduction
-        details.append(("Verdächtige Wörter", deduction, f"Gefunden: {', '.join(found_keywords)}"))
+    # 🔍 Schlüsselwörter finden
+    for category, words in PHISHING_KEYWORDS.items():
+        for word in words:
+            if re.search(rf"\b{re.escape(word)}\b", sms_lower):
+                found[category].append(word)
 
-    if "http" in sms_text or "www" in sms_text:
-        deduction = 20
-        score -= deduction
-        details.append(("Verdächtige Links", deduction, "Links werden oft für Betrug genutzt."))
+    # 🚨 Familienbezug
+    if found["familie"]:
+        score -= 40
+        details.append((
+            "Familienbezug erkannt",
+            40,
+            f"Begriffe: {', '.join(found['familie'])}"
+        ))
 
-    if re.search(r"\b\d{6}\b", sms_text):
-        deduction = 15
+        warnings.append(
+            "⚠️ In dieser Nachricht werden Familienmitglieder erwähnt.\n"
+            "Gehe besonders vorsichtig vor:\n"
+            "- Antworte NICHT direkt auf diese Nachricht\n"
+            "- Kontaktiere die Person über eine bereits gespeicherte Nummer\n"
+            "- Frage ein anderes Familienmitglied, ob die Nachricht echt ist\n"
+            "- Überweise kein Geld und teile keine Codes"
+        )
+
+    # 🚨 Familie + Geld
+    if found["familie"] and found["geld"]:
+        score -= 30
+        details.append((
+            "Familien-Geld-Kombination",
+            30,
+            "Sehr typisches Betrugsmuster (Hallo‑Mama/Papa‑Betrug)"
+        ))
+
+    # 🔗 Links
+    if re.search(r"(https?://|www\.)", sms_lower):
+        score -= 25
+        details.append(("Link", 25, "Verdächtiger Link gefunden"))
+
+    # 🔢 Zahlencodes
+    if re.search(r"\b\d{5,}\b", sms_text):
+        score -= 15
+        details.append(("Code", 15, "Langer Zahlencode gefunden"))
+
+    # 🔎 Allgemeine Schlüsselwörter
+    total_keywords = sum(len(v) for v in found.values())
+    if total_keywords:
+        deduction = min(total_keywords * 3, 35)
         score -= deduction
-        details.append(("Ungewöhnliches Zahlmuster", deduction, "Sequenz aus 6 Ziffern gefunden."))
+        details.append((
+            "Phishing-Muster",
+            deduction,
+            f"Anzahl erkannter Muster: {total_keywords}"
+        ))
 
     score = max(score, 0)
-    if score < 40:
-        status = "Gefährlich"
+
+    # 🚦 Status
+    if score < 30:
+        status = "GEFÄHRLICH"
         color = "red"
-    elif score < 70:
-        status = "Potentiell gefährlich"
+    elif score < 60:
+        status = "POTENTIELL GEFÄHRLICH"
         color = "orange"
     else:
-        status = "Ungefährlich"
+        status = "UNGEFÄHRLICH"
         color = "green"
 
     return {
         "score": score,
         "status": status,
         "color": color,
-        "details": details
+        "details": details,
+        "warnings": warnings
     }
+
+# =====================================================
+# DEMO
+# =====================================================
+
+if __name__ == "__main__":
+    sms = "Hallo Mama, mein Handy ist kaputt. Bitte überweis mir sofort 800€."
+    result = scan_sms(sms)
+
+    print("SMS:", sms)
+    print("\nBewertung:")
+    for k, v in result.items():
+        print(f"{k}: {v}")
