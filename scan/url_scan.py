@@ -103,7 +103,7 @@ def analyze_website(url, debug=False):
 
     except requests.exceptions.RequestException as e:
         results["reachable"] = False
-        results["errors"].append(f"Seite nicht erreichbar: {str(e)}")
+        results["errors"].append(f"Seite nicht erreichbar")
 
     except Exception as e:
         results["reachable"] = False
