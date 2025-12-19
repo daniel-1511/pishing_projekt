@@ -138,6 +138,7 @@ window.onload = function () {
 </head>
 
 <body>
+
 <div class="toggle-container">
     <label class="switch">
         <input type="checkbox" id="darkModeToggle">
@@ -147,122 +148,153 @@ window.onload = function () {
 
 <h1>CyberNet 🔐</h1>
 
+{% if error %}
+<div class="box">
+    <strong style="color:red;">{{ error }}</strong>
+</div>
+{% endif %}
+
 <!-- ================= URL SCAN ================= -->
 <div class="box">
-    <h2>🌐 URL-Scan</h2>
-    <form method="post" action="/check">
-        <input type="text" name="url" placeholder="https://example.com" value="{{ url or '' }}" required>
-        <button type="submit">Prüfen</button>
-    </form>
+<h2>🌐 URL-Scan</h2>
 
-    {% if url_result %}
-        <h3>Status: {{ url_result.status }}</h3>
-        <div class="bar">
-            <div class="bar-inner {% if url_result.score <= 10 %}red{% elif url_result.score <= 30 %}orange{% elif url_result.score <= 60 %}yellow{% else %}green{% endif %}">
-                {{ url_result.score }}%
-            </div>
-        </div>
+<form method="post" action="/check">
+    <input type="text" name="url" placeholder="https://example.com" value="{{ url or '' }}" required>
+    <button type="submit">Prüfen</button>
+</form>
 
-        <details open>
-            <summary><strong>🔍 Details</strong></summary>
-            <ul>
-            {% for name, points, reason in url_result.details %}
-                <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+{% if url_result %}
+<h3>Status: {{ url_result.status }}</h3>
+
+<div class="bar">
+    <div class="bar-inner {% if url_result.score <= 10 %}red{% elif url_result.score <= 30 %}orange{% elif url_result.score <= 60 %}yellow{% else %}green{% endif %}">
+        {{ url_result.score }}%
+    </div>
+</div>
+
+<!-- 🔍 SCAN DETAILS -->
+<details open>
+    <summary><strong>🔍 Scan-Details</strong></summary>
+    <ul>
+        {% for name, points, reason in url_result.details %}
+        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+<!-- 🌐 WEBSITE ANALYSE -->
+{% if url_result.website_analysis %}
+<details>
+    <summary><strong>🌐 Website-Analyse</strong></summary>
+    <ul>
+        <li><strong>HTTP-Status:</strong> {{ url_result.website_analysis.http_status }}</li>
+
+        {% if url_result.website_analysis.errors %}
+            {% for err in url_result.website_analysis.errors %}
+                <li style="color:red;">❌ {{ err }}</li>
             {% endfor %}
-            </ul>
-        </details>
-    {% endif %}
+        {% endif %}
+
+        {% if url_result.website_analysis.warnings %}
+            {% for warn in url_result.website_analysis.warnings %}
+                <li style="color:orange;">⚠️ {{ warn }}</li>
+            {% endfor %}
+        {% endif %}
+
+        {% if url_result.website_analysis.nsfw %}
+            <li>🔞 NSFW-Inhalte erkannt</li>
+        {% endif %}
+
+        {% if url_result.website_analysis.casino %}
+            <li>🎰 Glücksspiel-/Casino-Inhalte erkannt</li>
+        {% endif %}
+    </ul>
+</details>
+{% endif %}
+
+{% endif %}
 </div>
 
 <!-- ================= SMS SCAN ================= -->
 <div class="box">
-    <h2>📩 SMS-Scan</h2>
-    <form method="post" action="/check-sms">
-        <textarea name="sms_text" placeholder="SMS-Text hier einfügen..." required>{{ sms_text or '' }}</textarea>
-        <button type="submit">Prüfen</button>
-    </form>
+<h2>📩 SMS-Scan</h2>
 
-    {% if sms_result %}
-        <h3>Status: {{ sms_result.status }}</h3>
-        <div class="bar">
-            <div class="bar-inner {% if sms_result.score < 40 %}red{% elif sms_result.score < 70 %}orange{% else %}green{% endif %}">
-                {{ sms_result.score }}%
-            </div>
-        </div>
+<form method="post" action="/check-sms">
+    <textarea name="sms_text" placeholder="SMS-Text hier einfügen..." required>{{ sms_text or '' }}</textarea>
+    <button type="submit">Prüfen</button>
+</form>
 
-        <!-- ℹ️ Familien-Hinweis (neutral, aufklappbar) -->
-        {% if sms_result.family_verification.active %}
-        <details>
-            <summary>{{ sms_result.family_verification.title }}</summary>
-            <p>{{ sms_result.family_verification.analysis }}</p>
-            <ul>
-                {% for step in sms_result.family_verification.steps_before_reply %}
-                    <li>{{ step }}</li>
-                {% endfor %}
-            </ul>
-        </details>
-        {% endif %}
+{% if sms_result %}
+<h3>Status: {{ sms_result.status }}</h3>
 
-        <details open>
-            <summary><strong>📋 Analyse</strong></summary>
-            <ul>
-            {% for name, points, reason in sms_result.details %}
-                <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
-            {% endfor %}
-            </ul>
-        </details>
-    {% endif %}
+<div class="bar">
+    <div class="bar-inner {% if sms_result.score < 40 %}red{% elif sms_result.score < 70 %}orange{% else %}green{% endif %}">
+        {{ sms_result.score }}%
+    </div>
+</div>
+
+<details open>
+    <summary><strong>📋 Analyse</strong></summary>
+    <ul>
+        {% for name, points, reason in sms_result.details %}
+        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
 </div>
 
 <!-- ================= EMAIL SCAN ================= -->
 <div class="box">
-    <h2>📧 E-Mail-Scan</h2>
-    <form method="post" action="/check-email">
-        <input type="email" name="email_sender" placeholder="Absender" value="{{ email_sender or '' }}" required>
-        <input type="text" name="email_subject" placeholder="Betreff" value="{{ email_subject or '' }}" required>
-        <textarea name="email_body" placeholder="E-Mail-Inhalt..." required>{{ email_body or '' }}</textarea>
-        <button type="submit">Prüfen</button>
-    </form>
+<h2>📧 E-Mail-Scan</h2>
 
-    {% if email_result %}
-        <h3>Status: {{ email_result.status }}</h3>
-        <div class="bar">
-            <div class="bar-inner {% if email_result.score < 40 %}red{% elif email_result.score < 70 %}orange{% else %}green{% endif %}">
-                {{ email_result.score }}%
-            </div>
-        </div>
-    {% endif %}
+<form method="post" action="/check-email">
+    <input type="email" name="email_sender" placeholder="Absender" value="{{ email_sender or '' }}" required>
+    <input type="text" name="email_subject" placeholder="Betreff" value="{{ email_subject or '' }}" required>
+    <textarea name="email_body" placeholder="E-Mail-Inhalt..." required>{{ email_body or '' }}</textarea>
+    <button type="submit">Prüfen</button>
+</form>
+
+{% if email_result %}
+<h3>Status: {{ email_result.status }}</h3>
+
+<div class="bar">
+    <div class="bar-inner {% if email_result.score < 40 %}red{% elif email_result.score < 70 %}orange{% else %}green{% endif %}">
+        {{ email_result.score }}%
+    </div>
+</div>
+{% endif %}
 </div>
 
 <!-- ================= TELEFONNUMMER SCAN ================= -->
 <div class="box">
-    <h2>📞 Telefonnummer-Scan</h2>
-    <form method="post" action="/check-phone">
-        <input type="text" name="phone_number" placeholder="+491234567890" value="{{ phone_number or '' }}" required>
-        <button type="submit">Prüfen</button>
-    </form>
+<h2>📞 Telefonnummer-Scan</h2>
 
-    {% if phone_result %}
-    <h3>Status: {{ phone_result.status }}</h3>
+<form method="post" action="/check-phone">
+    <input type="text" name="phone_number" placeholder="+491234567890" value="{{ phone_number or '' }}" required>
+    <button type="submit">Prüfen</button>
+</form>
 
-    <div class="bar">
-        <div class="bar-inner {% if phone_result.score <= 10 %}red{% elif phone_result.score <= 30 %}orange{% elif phone_result.score <= 60 %}yellow{% else %}green{% endif %}">
-            {{ phone_result.score }}%
-        </div>
+{% if phone_result %}
+<h3>Status: {{ phone_result.status }}</h3>
+
+<div class="bar">
+    <div class="bar-inner {% if phone_result.score <= 10 %}red{% elif phone_result.score <= 30 %}orange{% elif phone_result.score <= 60 %}yellow{% else %}green{% endif %}">
+        {{ phone_result.score }}%
     </div>
+</div>
 
-    {% if phone_result.details %}
-    <details open>
-        <summary><strong>🔍 Analyse</strong></summary>
-        <ul>
+{% if phone_result.details %}
+<details open>
+    <summary><strong>🔍 Analyse</strong></summary>
+    <ul>
         {% for name, points, reason in phone_result.details %}
-            <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
         {% endfor %}
-        </ul>
-    </details>
-    {% endif %}
+    </ul>
+</details>
 {% endif %}
-
+{% endif %}
 </div>
 
 </body>
