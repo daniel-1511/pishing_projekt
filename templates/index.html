@@ -214,18 +214,18 @@ window.onload = function () {
         if (modalToggle) modalToggle.checked = true;
     }
 
-    // Sidebar öffnen
+    // Hamburger öffnen
     menuBtn.addEventListener('click', () => {
         sidebar.classList.add('active');
     });
 
-    // Sidebar schließen
+    // Schließen
     closeBtn.addEventListener('click', () => {
         sidebar.classList.remove('active');
     });
 
     // Dark Mode Toggle
-    modalToggle.addEventListener('change', toggleDark);
+    if(modalToggle) modalToggle.addEventListener('change', toggleDark);
 };
 </script>
 </head>
@@ -250,13 +250,19 @@ window.onload = function () {
 <!-- ================= SIDEBAR ================= -->
 <div id="menuSidebar">
     <span id="closeSidebar" class="closeBtn">✖</span>
-    <h3>Menü Liste</h3>
+    <h3>Menu Liste</h3>
     <label class="switch" style="margin-top:20px;">
         <input type="checkbox" id="modalDarkModeToggle">
         <span class="slider"></span>
     </label>
     <p style="margin-top:10px;">Dark Mode aktivieren/deaktivieren</p>
 </div>
+
+{% if error %}
+<div class="box">
+    <strong style="color:red;">{{ error }}</strong>
+</div>
+{% endif %}
 
 <!-- ================= URL SCAN ================= -->
 <div class="box" id="url-scan">
