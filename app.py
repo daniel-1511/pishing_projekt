@@ -14,32 +14,39 @@ templates = Jinja2Templates(directory="templates")
 
 
 # ======================================================
+# TEMPLATE RENDER HELPER (SEHR WICHTIG)
+# ======================================================
+def render_index(request: Request, **kwargs):
+    context = {
+        "request": request,
+
+        # Ergebnisse
+        "url_result": None,
+        "sms_result": None,
+        "email_result": None,
+        "phone_result": None,
+
+        # Eingaben
+        "url": "",
+        "sms_text": "",
+        "email_sender": "",
+        "email_subject": "",
+        "email_body": "",
+        "phone_number": "",
+
+        "error": None,
+    }
+
+    context.update(kwargs)
+    return templates.TemplateResponse("index.html", context)
+
+
+# ======================================================
 # STARTSEITE
 # ======================================================
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-
-            # Ergebnisse
-            "url_result": None,
-            "sms_result": None,
-            "email_result": None,
-            "phone_result": None,
-
-            # Eingaben
-            "url": "",
-            "sms_text": "",
-            "email_sender": "",
-            "email_subject": "",
-            "email_body": "",
-            "phone_number": "",
-
-            "error": None
-        }
-    )
+    return render_index(request)
 
 
 # ======================================================
@@ -49,36 +56,33 @@ def home(request: Request):
 def check_url(request: Request, url: str = Form(...)):
     url = url.strip()
 
+    if not url:
+        return render_index(
+            request,
+            error="Bitte eine URL eingeben."
+        )
+
     if not url.startswith(("http://", "https://")):
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "error": "Bitte eine gültige URL mit http:// oder https:// eingeben.",
-                "url": url
-            }
+        return render_index(
+            request,
+            error="Bitte eine gültige URL mit http:// oder https:// eingeben.",
+            url=url
         )
 
     parsed = urlparse(url)
     if not parsed.netloc:
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "error": "Die URL scheint ungültig zu sein.",
-                "url": url
-            }
+        return render_index(
+            request,
+            error="Die URL scheint ungültig zu sein.",
+            url=url
         )
 
     result = scan_url(url)
 
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "url_result": result,
-            "url": url
-        }
+    return render_index(
+        request,
+        url_result=result,
+        url=url
     )
 
 
@@ -89,15 +93,18 @@ def check_url(request: Request, url: str = Form(...)):
 def check_sms(request: Request, sms_text: str = Form(...)):
     sms_text = sms_text.strip()
 
+    if not sms_text:
+        return render_index(
+            request,
+            error="Bitte einen SMS-Text eingeben."
+        )
+
     result = scan_sms(sms_text)
 
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "sms_result": result,
-            "sms_text": sms_text
-        }
+    return render_index(
+        request,
+        sms_result=result,
+        sms_text=sms_text
     )
 
 
@@ -115,17 +122,23 @@ def check_email(
     email_subject = email_subject.strip()
     email_body = email_body.strip()
 
+    if not email_sender or not email_subject or not email_body:
+        return render_index(
+            request,
+            error="Bitte alle E-Mail-Felder ausfüllen.",
+            email_sender=email_sender,
+            email_subject=email_subject,
+            email_body=email_body
+        )
+
     result = scan_email(email_sender, email_subject, email_body)
 
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "email_result": result,
-            "email_sender": email_sender,
-            "email_subject": email_subject,
-            "email_body": email_body
-        }
+    return render_index(
+        request,
+        email_result=result,
+        email_sender=email_sender,
+        email_subject=email_subject,
+        email_body=email_body
     )
 
 
@@ -136,13 +149,16 @@ def check_email(
 def check_phone(request: Request, phone_number: str = Form(...)):
     phone_number = phone_number.strip()
 
+    if not phone_number:
+        return render_index(
+            request,
+            error="Bitte eine Telefonnummer eingeben."
+        )
+
     result = scan_phone_number(phone_number)
 
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "phone_result": result,
-            "phone_number": phone_number
-        }
+    return render_index(
+        request,
+        phone_result=result,
+        phone_number=phone_number
     )

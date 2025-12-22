@@ -77,17 +77,6 @@ input:checked + .slider:before {
     background-color: var(--bg);
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Abstand Logo ↔ Name */
-}
-
-.brand-logo {
-    height: 32px; /* Größe vom Logo */
-    width: auto;
-}
-
 
 .header .logo {
     font-size: 1.5rem;

@@ -10,158 +10,21 @@
     --bg: #f5f5f5;
     --box: #ffffff;
     --text: #000000;
-    --nav: #eaeaea;
 }
 
 body.dark {
     --bg: #121212;
     --box: #1e1e1e;
     --text: #f5f5f5;
-    --nav: #1a1a1a;
 }
-
-html { scroll-behavior: smooth; }
 
 body {
     font-family: Arial, sans-serif;
     background-color: var(--bg);
     color: var(--text);
     padding: 40px;
-    padding-top: 110px;
-    transition: background-color 0.5s, color 0.5s;
 }
 
-/* ================= NAV ================= */
-.top-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background: var(--nav);
-    display: flex;
-    align-items: center;
-    padding: 0 15px;
-    z-index: 1000;
-}
-
-/* Hamburger */
-.hamburger {
-    width: 36px;
-    height: 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 5px;
-    cursor: pointer;
-}
-
-.hamburger span {
-    height: 4px;
-    width: 100%;
-    background: var(--text);
-    border-radius: 2px;
-}
-
-/* Brand */
-.brand {
-    margin-left: 10px;
-    font-size: 20px;
-    font-weight: bold;
-    text-decoration: none;
-    color: var(--text);
-}
-
-/* Center nav */
-.nav-links {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 25px;
-}
-
-.nav-links a {
-    text-decoration: none;
-    color: var(--text);
-    font-weight: bold;
-    padding: 6px 14px;
-    border-radius: 6px;
-}
-
-.nav-links a:hover {
-    background-color: #2196F3;
-    color: white;
-}
-
-/* ================= SIDE MENU ================= */
-.side-menu {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100%;
-    background: var(--box);
-    box-shadow: 4px 0 15px rgba(0,0,0,0.35);
-    padding: 20px;
-
-    transform: translateX(-100%);
-    transition: transform 0.35s ease;
-
-    z-index: 2000;
-}
-
-.side-menu.open {
-    transform: translateX(0);
-}
-
-/* Close button */
-.close-btn {
-    font-size: 24px;
-    cursor: pointer;
-    text-align: right;
-}
-
-/* Darkmode switch */
-.switch {
-    margin-top: 15px;
-    position: relative;
-    width: 50px;
-    height: 25px;
-    display: inline-block;
-}
-
-.switch input { opacity: 0; }
-
-.slider {
-    position: absolute;
-    inset: 0;
-    background-color: #ccc;
-    border-radius: 30px;
-    cursor: pointer;
-}
-
-.slider:before {
-    content: "";
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    left: 4px;
-    bottom: 3.5px;
-    background-color: white;
-    border-radius: 50%;
-    transition: 0.3s;
-}
-
-input:checked + .slider {
-    background-color: #2196F3;
-}
-
-input:checked + .slider:before {
-    transform: translateX(24px);
-}
-
-/* ================= CONTENT ================= */
 .box {
     background-color: var(--box);
     padding: 20px;
@@ -178,14 +41,15 @@ button {
 input[type="text"], input[type="email"], textarea {
     width: 100%;
     padding: 8px;
-    margin: 5px 0 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
 }
 
 .bar {
     width: 100%;
-    background-color: #ccc;
+    background-color: #cccccc;
     border-radius: 10px;
     overflow: hidden;
     margin: 10px 0;
@@ -194,111 +58,252 @@ input[type="text"], input[type="email"], textarea {
 .bar-inner {
     height: 20px;
     text-align: center;
-    color: #fff;
+    color: #ffffff;
     font-size: 12px;
 }
 
-.red { background: red; }
-.orange { background: orange; }
-.yellow { background: goldenrod; }
-.green { background: green; }
+.bar-inner.red { background-color: red; }
+.bar-inner.orange { background-color: orange; }
+.bar-inner.yellow { background-color: goldenrod; }
+.bar-inner.green { background-color: green; }
+
+.toggle-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 25px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #ccc;
+    transition: background-color 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 3.5px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+details {
+    margin-top: 10px;
+}
 </style>
 
 <script>
-function toggleMenu() {
-    document.getElementById("sideMenu").classList.toggle("open");
-}
-
 function toggleDark() {
     document.body.classList.toggle("dark");
     localStorage.setItem("darkmode", document.body.classList.contains("dark"));
 }
 
 window.onload = function () {
-    const toggle = document.getElementById("darkToggle");
+    const toggle = document.getElementById('darkModeToggle');
     if (localStorage.getItem("darkmode") === "true") {
         document.body.classList.add("dark");
         toggle.checked = true;
     }
-
-    toggle.addEventListener("change", toggleDark);
+    toggle.addEventListener('change', toggleDark);
 };
 </script>
 </head>
 
 <body>
 
-<!-- SIDE MENU -->
-<div class="side-menu" id="sideMenu">
-    <div class="close-btn" onclick="toggleMenu()">✖</div>
-
-    <h3>⚙️ Einstellungen</h3>
-    <p>🌙 Dark Mode</p>
-
+<div class="toggle-container">
     <label class="switch">
-        <input type="checkbox" id="darkToggle" onchange="toggleDark()">
+        <input type="checkbox" id="darkModeToggle">
         <span class="slider"></span>
     </label>
 </div>
 
-<!-- NAV -->
-<nav class="top-nav">
-    <div class="hamburger" onclick="toggleMenu()">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
-
-    <a href="/" class="brand">
-    <img src="CyberNetLogo-removebg-preview.png" alt="Logo" class="brand-logo">
-    <span>CyberNet 🔐</span>
-    </a>
-
-    <div class="nav-links">
-        <a href="#url-scan">🌐 URL</a>
-        <a href="#sms-scan">📩 SMS</a>
-        <a href="#email-scan">📧 E-Mail</a>
-        <a href="#phone-scan">📞 Telefon</a>
-    </div>
-</nav>
+<h1>CyberNet 🔐</h1>
 
 {% if error %}
-<div class="box"><strong style="color:red;">{{ error }}</strong></div>
+<div class="box">
+    <strong style="color:red;">{{ error }}</strong>
+</div>
 {% endif %}
 
-<div class="box" id="url-scan">
+<!-- ================= URL SCAN ================= -->
+<div class="box">
 <h2>🌐 URL-Scan</h2>
+
 <form method="post" action="/check">
-    <input type="text" name="url" value="{{ url or '' }}" required>
+    <input type="text" name="url" placeholder="https://example.com" value="{{ url or '' }}" required>
     <button type="submit">Prüfen</button>
 </form>
+
+{% if url_result %}
+<h3>Status: {{ url_result.status }}</h3>
+
+<div class="bar">
+    <div class="bar-inner {% if url_result.score <= 10 %}red{% elif url_result.score <= 30 %}orange{% elif url_result.score <= 60 %}yellow{% else %}green{% endif %}">
+        {{ url_result.score }}%
+    </div>
 </div>
 
-<div class="box" id="sms-scan">
+<details open>
+    <summary><strong>🔍 Scan-Details</strong></summary>
+    <ul>
+        {% for name, points, reason in url_result.details %}
+        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+{% if url_result.website_analysis %}
+<details>
+    <summary><strong>🌐 Website-Analyse</strong> (Score: {{ url_result.score }}%)</summary>
+    <div class="bar">
+        <div class="bar-inner {% if url_result.score <= 10 %}red{% elif url_result.score <= 30 %}orange{% elif url_result.score <= 60 %}yellow{% else %}green{% endif %}">
+            {{ url_result.score }}%
+        </div>
+    </div>
+    <ul>
+        <li>HTTP-Status: {{ url_result.website_analysis.http_status }}</li>
+        {% for err in url_result.website_analysis.errors %}
+            <li style="color:red;">❌ {{ err }}</li>
+        {% endfor %}
+        {% for warn in url_result.website_analysis.warnings %}
+            <li style="color:orange;">⚠️ {{ warn }}</li>
+        {% endfor %}
+        {% if url_result.website_analysis.nsfw %}
+            <li>🔞 NSFW-Inhalte erkannt</li>
+        {% endif %}
+        {% if url_result.website_analysis.casino %}
+            <li>🎰 Glücksspiel-Inhalte erkannt</li>
+        {% endif %}
+    </ul>
+</details>
+{% endif %}
+
+{% endif %}
+</div>
+
+<!-- ================= SMS SCAN ================= -->
+<div class="box">
 <h2>📩 SMS-Scan</h2>
+
 <form method="post" action="/check-sms">
-    <textarea name="sms_text" required>{{ sms_text or '' }}</textarea>
+    <textarea name="sms_text" placeholder="SMS-Text hier einfügen..." required>{{ sms_text or '' }}</textarea>
     <button type="submit">Prüfen</button>
 </form>
+
+{% if sms_result %}
+<h3>Status: {{ sms_result.status }}</h3>
+
+<div class="bar">
+    <div class="bar-inner {% if sms_result.score < 40 %}red{% elif sms_result.score < 70 %}orange{% else %}green{% endif %}">
+        {{ sms_result.score }}%
+    </div>
 </div>
 
-<div class="box" id="email-scan">
+<details open>
+    <summary><strong>📋 Analyse</strong></summary>
+    <ul>
+        {% for name, points, reason in sms_result.details %}
+        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        {% endfor %}
+    </ul>
+</details>
+
+{% if sms_result.family_verification.active %}
+<div class="box" style="border:1px solid orange; padding:10px; margin-top:10px;">
+    <strong>{{ sms_result.family_verification.title }}</strong>
+    <p>{{ sms_result.family_verification.analysis }}</p>
+    <ul>
+        {% for step in sms_result.family_verification.steps_before_reply %}
+        <li>{{ step }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% endif %}
+</div>
+
+<!-- ================= EMAIL SCAN ================= -->
+<div class="box">
 <h2>📧 E-Mail-Scan</h2>
+
 <form method="post" action="/check-email">
-    <input type="email" name="email_sender" value="{{ email_sender or '' }}" required>
-    <input type="text" name="email_subject" value="{{ email_subject or '' }}" required>
-    <textarea name="email_body" required>{{ email_body or '' }}</textarea>
+    <input type="email" name="email_sender" placeholder="Absender" value="{{ email_sender or '' }}" required>
+    <input type="text" name="email_subject" placeholder="Betreff" value="{{ email_subject or '' }}" required>
+    <textarea name="email_body" placeholder="E-Mail-Inhalt..." required>{{ email_body or '' }}</textarea>
     <button type="submit">Prüfen</button>
 </form>
+
+{% if email_result %}
+<h3>Status: {{ email_result.status }}</h3>
+
+<div class="bar">
+    <div class="bar-inner {% if email_result.score < 40 %}red{% elif email_result.score < 70 %}orange{% else %}green{% endif %}">
+        {{ email_result.score }}%
+    </div>
+</div>
+{% endif %}
 </div>
 
-<div class="box" id="phone-scan">
+<!-- ================= TELEFONNUMMER SCAN ================= -->
+<div class="box">
 <h2>📞 Telefonnummer-Scan</h2>
+
 <form method="post" action="/check-phone">
-    <input type="text" name="phone_number" value="{{ phone_number or '' }}" required>
+    <input type="text" name="phone_number" placeholder="+491234567890" value="{{ phone_number or '' }}" required>
     <button type="submit">Prüfen</button>
 </form>
+
+{% if phone_result %}
+<h3>Status: {{ phone_result.status }}</h3>
+
+<div class="bar">
+    <div class="bar-inner {% if phone_result.score <= 10 %}red{% elif phone_result.score <= 30 %}orange{% elif phone_result.score <= 60 %}yellow{% else %}green{% endif %}">
+        {{ phone_result.score }}%
+    </div>
+</div>
+
+{% if phone_result.details %}
+<details open>
+    <summary><strong>🔍 Analyse</strong></summary>
+    <ul>
+        {% for name, points, reason in phone_result.details %}
+        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
+{% endif %}
 </div>
 
 </body>
-</html>
+</html> ich möchte oben wie so ein strich und drüber ein Inhaltsverzeichnis haben mit links direkt zu den scanns
