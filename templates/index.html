@@ -24,6 +24,7 @@ body {
     color: var(--text);
     padding: 40px;
     scroll-behavior: smooth;
+    margin: 0;
 }
 
 .navbar {
@@ -34,13 +35,15 @@ body {
     padding: 12px 20px;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* verteilt links und rechts */
+    justify-content: space-between;
     border-radius: 12px;
     margin-bottom: 30px;
 }
 
 .nav-left {
     font-size: 20px;
+    display: flex;
+    align-items: center;
 }
 
 .nav-left a {
@@ -53,12 +56,11 @@ body {
     text-decoration: underline;
 }
 
-/* mittig zentrierte Links */
 .nav-center {
     display: flex;
-    justify-content: center; /* horizontal zentrieren */
-    gap: 30px; /* Abstand zwischen Links */
-    flex: 1; /* nimmt den freien Platz */
+    justify-content: center;
+    gap: 30px;
+    flex: 1;
 }
 
 .nav-center a {
@@ -113,12 +115,6 @@ input[type="text"], input[type="email"], textarea {
 .bar-inner.yellow { background-color: goldenrod; }
 .bar-inner.green { background-color: green; }
 
-.toggle-container {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
-
 .switch {
     position: relative;
     display: inline-block;
@@ -161,6 +157,40 @@ input:checked + .slider:before {
     transform: translateX(24px);
 }
 
+/* ================= SIDEBAR ================= */
+#menuSidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 100%;
+    background-color: var(--box);
+    color: var(--text);
+    z-index: 2000;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    transform: translateX(-100%); /* komplett unsichtbar */
+    transition: transform 0.3s ease;
+}
+
+#menuSidebar.active {
+    transform: translateX(0);
+}
+
+#menuSidebar h3 {
+    margin-top: 0;
+}
+
+#menuSidebar .closeBtn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 20px;
+}
+
 details {
     margin-top: 10px;
 }
@@ -173,29 +203,39 @@ function toggleDark() {
 }
 
 window.onload = function () {
-    const toggle = document.getElementById('darkModeToggle');
+    const sidebar = document.getElementById('menuSidebar');
+    const menuBtn = document.getElementById('menuBtn');
+    const closeBtn = document.getElementById('closeSidebar');
+    const modalToggle = document.getElementById('modalDarkModeToggle');
+
+    // Dark Mode aus LocalStorage laden
     if (localStorage.getItem("darkmode") === "true") {
         document.body.classList.add("dark");
-        toggle.checked = true;
+        if (modalToggle) modalToggle.checked = true;
     }
-    toggle.addEventListener('change', toggleDark);
+
+    // Sidebar öffnen
+    menuBtn.addEventListener('click', () => {
+        sidebar.classList.add('active');
+    });
+
+    // Sidebar schließen
+    closeBtn.addEventListener('click', () => {
+        sidebar.classList.remove('active');
+    });
+
+    // Dark Mode Toggle
+    modalToggle.addEventListener('change', toggleDark);
 };
 </script>
 </head>
 
 <body>
 
-<!-- ================= DARK MODE TOGGLE ================= -->
-<div class="toggle-container">
-    <label class="switch">
-        <input type="checkbox" id="darkModeToggle">
-        <span class="slider"></span>
-    </label>
-</div>
-
 <!-- ================= NAVIGATION ================= -->
 <nav class="navbar">
     <div class="nav-left">
+        <span id="menuBtn" style="font-size:24px; cursor:pointer; margin-right:10px;">☰</span>
         <a href="/" onclick="location.reload(); return false;"><strong>CyberNet 🔐</strong></a>
     </div>
 
@@ -207,30 +247,31 @@ window.onload = function () {
     </div>
 </nav>
 
-{% if error %}
-<div class="box">
-    <strong style="color:red;">{{ error }}</strong>
+<!-- ================= SIDEBAR ================= -->
+<div id="menuSidebar">
+    <span id="closeSidebar" class="closeBtn">✖</span>
+    <h3>Menü Liste</h3>
+    <label class="switch" style="margin-top:20px;">
+        <input type="checkbox" id="modalDarkModeToggle">
+        <span class="slider"></span>
+    </label>
+    <p style="margin-top:10px;">Dark Mode aktivieren/deaktivieren</p>
 </div>
-{% endif %}
 
 <!-- ================= URL SCAN ================= -->
 <div class="box" id="url-scan">
 <h2>🌐 URL-Scan</h2>
-
 <form method="post" action="/check">
     <input type="text" name="url" placeholder="https://example.com" value="{{ url or '' }}" required>
     <button type="submit">Prüfen</button>
 </form>
-
 {% if url_result %}
 <h3>Status: {{ url_result.status }}</h3>
-
 <div class="bar">
     <div class="bar-inner {% if url_result.score <= 10 %}red{% elif url_result.score <= 30 %}orange{% elif url_result.score <= 60 %}yellow{% else %}green{% endif %}">
         {{ url_result.score }}%
     </div>
 </div>
-
 <details open>
     <summary><strong>🔍 Scan-Details</strong></summary>
     <ul>
@@ -239,7 +280,6 @@ window.onload = function () {
         {% endfor %}
     </ul>
 </details>
-
 {% if url_result.website_analysis %}
 <details>
     <summary><strong>🌐 Website-Analyse</strong> (Score: {{ url_result.score }}%)</summary>
@@ -265,28 +305,23 @@ window.onload = function () {
     </ul>
 </details>
 {% endif %}
-
 {% endif %}
 </div>
 
 <!-- ================= SMS SCAN ================= -->
 <div class="box" id="sms-scan">
 <h2>📩 SMS-Scan</h2>
-
 <form method="post" action="/check-sms">
     <textarea name="sms_text" placeholder="SMS-Text hier einfügen..." required>{{ sms_text or '' }}</textarea>
     <button type="submit">Prüfen</button>
 </form>
-
 {% if sms_result %}
 <h3>Status: {{ sms_result.status }}</h3>
-
 <div class="bar">
     <div class="bar-inner {% if sms_result.score < 40 %}red{% elif sms_result.score < 70 %}orange{% else %}green{% endif %}">
         {{ sms_result.score }}%
     </div>
 </div>
-
 <details open>
     <summary><strong>📋 Analyse</strong></summary>
     <ul>
@@ -295,7 +330,6 @@ window.onload = function () {
         {% endfor %}
     </ul>
 </details>
-
 {% if sms_result.family_verification.active %}
 <div class="box" style="border:1px solid orange; padding:10px; margin-top:10px;">
     <strong>{{ sms_result.family_verification.title }}</strong>
@@ -307,24 +341,20 @@ window.onload = function () {
     </ul>
 </div>
 {% endif %}
-
 {% endif %}
 </div>
 
 <!-- ================= EMAIL SCAN ================= -->
 <div class="box" id="email-scan">
 <h2>📧 E-Mail-Scan</h2>
-
 <form method="post" action="/check-email">
     <input type="email" name="email_sender" placeholder="Absender" value="{{ email_sender or '' }}" required>
     <input type="text" name="email_subject" placeholder="Betreff" value="{{ email_subject or '' }}" required>
     <textarea name="email_body" placeholder="E-Mail-Inhalt..." required>{{ email_body or '' }}</textarea>
     <button type="submit">Prüfen</button>
 </form>
-
 {% if email_result %}
 <h3>Status: {{ email_result.status }}</h3>
-
 <div class="bar">
     <div class="bar-inner {% if email_result.score < 40 %}red{% elif email_result.score < 70 %}orange{% else %}green{% endif %}">
         {{ email_result.score }}%
@@ -336,21 +366,17 @@ window.onload = function () {
 <!-- ================= TELEFONNUMMER SCAN ================= -->
 <div class="box" id="phone-scan">
 <h2>📞 Telefonnummer-Scan</h2>
-
 <form method="post" action="/check-phone">
     <input type="text" name="phone_number" placeholder="+491234567890" value="{{ phone_number or '' }}" required>
     <button type="submit">Prüfen</button>
 </form>
-
 {% if phone_result %}
 <h3>Status: {{ phone_result.status }}</h3>
-
 <div class="bar">
     <div class="bar-inner {% if phone_result.score <= 10 %}red{% elif phone_result.score <= 30 %}orange{% elif phone_result.score <= 60 %}yellow{% else %}green{% endif %}">
         {{ phone_result.score }}%
     </div>
 </div>
-
 {% if phone_result.details %}
 <details open>
     <summary><strong>🔍 Analyse</strong></summary>
