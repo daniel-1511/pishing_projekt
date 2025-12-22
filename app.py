@@ -14,7 +14,7 @@ templates = Jinja2Templates(directory="templates")
 
 
 # ======================================================
-# TEMPLATE RENDER HELPER (SEHR WICHTIG)
+# TEMPLATE RENDER HELPER
 # ======================================================
 def render_index(request: Request, **kwargs):
     context = {
@@ -85,6 +85,11 @@ def check_url(request: Request, url: str = Form(...)):
         url=url
     )
 
+# GET-Fallback für /check – kein Error mehr beim Neuladen
+@app.get("/check", response_class=HTMLResponse)
+def check_url_get(request: Request):
+    return render_index(request)
+
 
 # ======================================================
 # SMS SCAN
@@ -106,6 +111,11 @@ def check_sms(request: Request, sms_text: str = Form(...)):
         sms_result=result,
         sms_text=sms_text
     )
+
+# GET-Fallback für /check-sms – kein Error mehr beim Neuladen
+@app.get("/check-sms", response_class=HTMLResponse)
+def check_sms_get(request: Request):
+    return render_index(request)
 
 
 # ======================================================
@@ -141,6 +151,11 @@ def check_email(
         email_body=email_body
     )
 
+# GET-Fallback für /check-email – kein Error mehr beim Neuladen
+@app.get("/check-email", response_class=HTMLResponse)
+def check_email_get(request: Request):
+    return render_index(request)
+
 
 # ======================================================
 # TELEFONNUMMER SCAN
@@ -162,3 +177,8 @@ def check_phone(request: Request, phone_number: str = Form(...)):
         phone_result=result,
         phone_number=phone_number
     )
+
+# GET-Fallback für /check-phone – kein Error mehr beim Neuladen
+@app.get("/check-phone", response_class=HTMLResponse)
+def check_phone_get(request: Request):
+    return render_index(request)

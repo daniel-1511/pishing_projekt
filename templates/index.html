@@ -23,6 +23,52 @@ body {
     background-color: var(--bg);
     color: var(--text);
     padding: 40px;
+    scroll-behavior: smooth;
+}
+
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: var(--box);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* verteilt links und rechts */
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.nav-left {
+    font-size: 20px;
+}
+
+.nav-left a {
+    text-decoration: none;
+    color: var(--text);
+    font-weight: bold;
+}
+
+.nav-left a:hover {
+    text-decoration: underline;
+}
+
+/* mittig zentrierte Links */
+.nav-center {
+    display: flex;
+    justify-content: center; /* horizontal zentrieren */
+    gap: 30px; /* Abstand zwischen Links */
+    flex: 1; /* nimmt den freien Platz */
+}
+
+.nav-center a {
+    text-decoration: none;
+    color: var(--text);
+    font-weight: bold;
+}
+
+.nav-center a:hover {
+    text-decoration: underline;
 }
 
 .box {
@@ -139,6 +185,7 @@ window.onload = function () {
 
 <body>
 
+<!-- ================= DARK MODE TOGGLE ================= -->
 <div class="toggle-container">
     <label class="switch">
         <input type="checkbox" id="darkModeToggle">
@@ -146,7 +193,19 @@ window.onload = function () {
     </label>
 </div>
 
-<h1>CyberNet 🔐</h1>
+<!-- ================= NAVIGATION ================= -->
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/" onclick="location.reload(); return false;"><strong>CyberNet 🔐</strong></a>
+    </div>
+
+    <div class="nav-center">
+        <a href="#url-scan">🌐 URL‑Scan</a>
+        <a href="#sms-scan">📩 SMS‑Scan</a>
+        <a href="#email-scan">📧 E‑Mail‑Scan</a>
+        <a href="#phone-scan">📞 Telefon‑Scan</a>
+    </div>
+</nav>
 
 {% if error %}
 <div class="box">
@@ -155,7 +214,7 @@ window.onload = function () {
 {% endif %}
 
 <!-- ================= URL SCAN ================= -->
-<div class="box">
+<div class="box" id="url-scan">
 <h2>🌐 URL-Scan</h2>
 
 <form method="post" action="/check">
@@ -211,7 +270,7 @@ window.onload = function () {
 </div>
 
 <!-- ================= SMS SCAN ================= -->
-<div class="box">
+<div class="box" id="sms-scan">
 <h2>📩 SMS-Scan</h2>
 
 <form method="post" action="/check-sms">
@@ -253,7 +312,7 @@ window.onload = function () {
 </div>
 
 <!-- ================= EMAIL SCAN ================= -->
-<div class="box">
+<div class="box" id="email-scan">
 <h2>📧 E-Mail-Scan</h2>
 
 <form method="post" action="/check-email">
@@ -275,7 +334,7 @@ window.onload = function () {
 </div>
 
 <!-- ================= TELEFONNUMMER SCAN ================= -->
-<div class="box">
+<div class="box" id="phone-scan">
 <h2>📞 Telefonnummer-Scan</h2>
 
 <form method="post" action="/check-phone">
