@@ -8,7 +8,49 @@
 <style>
 :root {
     --bg: #f5f5f5;
-    </style>
+    --box: #ffffff;
+    --text: #000000;
+}
+
+body.dark {
+    --bg: #121212;
+    --box: #1e1e1e;
+    --text: #f5f5f5;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 40px;
+    scroll-behavior: smooth;
+    margin: 0;
+}
+
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: var(--box);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.nav-left {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.nav-left a {
+    text-decoration: none;
+    color: var(--text);
+    font-weight: bold;
+}
 
 .nav-left a:hover {
     text-decoration: underline;
@@ -248,10 +290,8 @@ async function sendChat() {
     <h2>🤖 KI-Sicherheitsberater</h2>
     <p>Fragen zu Phishing, Betrug oder verdächtigen Nachrichten.</p>
     <div id="chatBox"></div>
-    <form id="chatForm" onsubmit="return false;">
-        <input type="text" id="chatInput" placeholder="Frage eingeben …" autocomplete="off" required>
-        <button id="chatSendBtn" type="submit">Senden</button>
-    </form>
+    <input type="text" id="chatInput" placeholder="Frage eingeben …">
+    <button onclick="sendChat()">Senden</button>
 </div>
 
 <div class="box" id="url-scan">
@@ -385,6 +425,5 @@ async function sendChat() {
 {% endif %}
 </div>
 
-<script src="/static/script.js"></script>
 </body>
-</html>
+</html> 
