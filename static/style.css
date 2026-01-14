@@ -144,3 +144,28 @@ input:checked + .slider:before {
     justify-content: center;
     margin-top: 20px;
 }
+
+/* ===== KI CHAT LOADING ANIMATION ===== */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(33, 150, 243, 0.3);
+    border-top: 3px solid #2196F3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    display: inline-block;
+    font-style: italic;
+    color: #2196F3;
+    font-weight: bold;
+}

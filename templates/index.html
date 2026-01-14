@@ -237,16 +237,38 @@ async function sendChat() {
     const msg = input.value.trim();
     if (!msg) return;
 
+    // Nutzer Nachricht anzeigen
     chatBox.innerHTML += `<div class="chat-user">👤 ${msg}</div>`;
     input.value = "";
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Animierte Ladeanimation
+    const loadingId = "loading-" + Date.now();
+    chatBox.innerHTML += `
+        <div class="chat-bot" id="${loadingId}">
+            🤖 <span class="loading-spinner"></span><span class="loading-text">Die KI denkt nach...</span>
+        </div>
+    `;
+    chatBox.scrollTop = chatBox.scrollHeight;
 
     const formData = new FormData();
     formData.append("message", msg);
 
-    const res = await fetch("/chat", { method: "POST", body: formData });
-    const data = await res.json();
+    try {
+        const res = await fetch("/chat", { method: "POST", body: formData });
+        const data = await res.json();
 
-    chatBox.innerHTML += `‚<div class="chat-bot">🤖 ${data.answer}</div>`;
+        // Ladeanzeige mit Antwort ersetzen
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) {
+            loadingEl.innerHTML = `🤖 ${data.answer}`;
+        }
+    } catch (error) {
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) {
+            loadingEl.innerHTML = `<span style="color:red;">🤖 Fehler bei der KI-Verarbeitung</span>`;
+        }
+    }
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 </script>

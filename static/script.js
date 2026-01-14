@@ -68,11 +68,11 @@ document.addEventListener("DOMContentLoaded", function () {
         chatInput.value = "";
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        // Ladeanzeige
+        // Animierte Ladeanzeige
         const loadingId = "loading-" + Date.now();
         chatBox.innerHTML += `
             <div class="chat-bot" id="${loadingId}">
-                🤖 KI denkt nach...
+                🤖 <span class="loading-spinner"></span><span class="loading-text">Die KI denkt nach...</span>
             </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
