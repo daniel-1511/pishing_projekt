@@ -1,17 +1,40 @@
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from urllib.parse import urlparse
+import subprocess
 
-# Scanner importieren
+# =========================
+# SCANNER IMPORTE
+# =========================
 from scan.url_scan import scan_url
 from scan.sms_scan import scan_sms
 from scan.email_scan import scan_email
 from scan.phone_scan import scan_phone_number
 
+# =========================
+# APP SETUP
+# =========================
 app = FastAPI(title="CyberNet Security")
 templates = Jinja2Templates(directory="templates")
 
+# =========================
+# KI SYSTEM PROMPT (OLLAMA)
+# =========================
+SYSTEM_PROMPT = """
+Du bist ein IT-Sicherheitsassistent für Studierende.
+Deine Aufgaben:
+- Phishing erklären
+- Verdächtige Inhalte analysieren
+- Sicherheitsratschläge geben
+
+Regeln:
+- KEINE Phishing-Nachrichten erstellen
+- KEINE Angriffsstrategien erklären
+- Keine Social-Engineering-Anleitungen
+- Verständlich & sachlich antworten
+- Risiko als niedrig, mittel oder hoch bewerten
+"""
 
 # ======================================================
 # TEMPLATE RENDER HELPER
@@ -40,14 +63,12 @@ def render_index(request: Request, **kwargs):
     context.update(kwargs)
     return templates.TemplateResponse("index.html", context)
 
-
 # ======================================================
 # STARTSEITE
 # ======================================================
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return render_index(request)
-
 
 # ======================================================
 # URL SCAN
@@ -57,10 +78,7 @@ def check_url(request: Request, url: str = Form(...)):
     url = url.strip()
 
     if not url:
-        return render_index(
-            request,
-            error="Bitte eine URL eingeben."
-        )
+        return render_index(request, error="Bitte eine URL eingeben.")
 
     if not url.startswith(("http://", "https://")):
         return render_index(
@@ -85,11 +103,9 @@ def check_url(request: Request, url: str = Form(...)):
         url=url
     )
 
-# GET-Fallback für /check – kein Error mehr beim Neuladen
 @app.get("/check", response_class=HTMLResponse)
 def check_url_get(request: Request):
     return render_index(request)
-
 
 # ======================================================
 # SMS SCAN
@@ -99,10 +115,7 @@ def check_sms(request: Request, sms_text: str = Form(...)):
     sms_text = sms_text.strip()
 
     if not sms_text:
-        return render_index(
-            request,
-            error="Bitte einen SMS-Text eingeben."
-        )
+        return render_index(request, error="Bitte einen SMS-Text eingeben.")
 
     result = scan_sms(sms_text)
 
@@ -112,11 +125,9 @@ def check_sms(request: Request, sms_text: str = Form(...)):
         sms_text=sms_text
     )
 
-# GET-Fallback für /check-sms – kein Error mehr beim Neuladen
 @app.get("/check-sms", response_class=HTMLResponse)
 def check_sms_get(request: Request):
     return render_index(request)
-
 
 # ======================================================
 # EMAIL SCAN
@@ -151,11 +162,9 @@ def check_email(
         email_body=email_body
     )
 
-# GET-Fallback für /check-email – kein Error mehr beim Neuladen
 @app.get("/check-email", response_class=HTMLResponse)
 def check_email_get(request: Request):
     return render_index(request)
-
 
 # ======================================================
 # TELEFONNUMMER SCAN
@@ -165,10 +174,7 @@ def check_phone(request: Request, phone_number: str = Form(...)):
     phone_number = phone_number.strip()
 
     if not phone_number:
-        return render_index(
-            request,
-            error="Bitte eine Telefonnummer eingeben."
-        )
+        return render_index(request, error="Bitte eine Telefonnummer eingeben.")
 
     result = scan_phone_number(phone_number)
 
@@ -178,7 +184,40 @@ def check_phone(request: Request, phone_number: str = Form(...)):
         phone_number=phone_number
     )
 
-# GET-Fallback für /check-phone – kein Error mehr beim Neuladen
 @app.get("/check-phone", response_class=HTMLResponse)
 def check_phone_get(request: Request):
     return render_index(request)
+
+# ======================================================
+# ✅ KI-CHAT (ECHTE KI, KOSTENLOS, OLLAMA)
+# ======================================================
+@app.post("/chat", response_class=JSONResponse)
+async def chat(request: Request):
+    form = await request.form()
+    message = form.get("message", "").strip()
+
+    if not message:
+        return {"answer": "Bitte eine Frage eingeben."}
+
+    prompt = f"{SYSTEM_PROMPT}\n\nFrage:\n{message}\n\nAntwort:"
+
+    try:
+        result = subprocess.run(
+            ["ollama", "run", "mistral", prompt],
+            capture_output=True,
+            text=True,
+            timeout=90
+        )
+
+        answer = result.stdout.strip()
+
+        if not answer:
+            return {"answer": "Die KI hat keine Antwort geliefert."}
+
+        return {"answer": answer}
+
+    except FileNotFoundError:
+        return {"answer": "Ollama ist nicht installiert oder nicht im PATH."}
+
+    except Exception as e:
+        return {"answer": f"KI-Fehler: {str(e)}"}

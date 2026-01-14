@@ -1,41 +1,123 @@
+// ================================
 // Light-/Dark-Mode Toggle Switch und Hamburger-Menü
+// ================================
 document.addEventListener("DOMContentLoaded", function () {
     const toggle = document.querySelector("#darkModeToggle");
     const body = document.body;
-    const menu = document.querySelector("#sideMenu"); // Hamburger-Menü
+    const menu = document.querySelector("#sideMenu");
     const menuIcon = document.querySelector(".menu-icon");
 
-    // Beim Laden den aktuellen Modus anhand von LocalStorage setzen
+    // ================================
+    // Dark / Light Mode beim Laden
+    // ================================
     if (localStorage.getItem("darkmode") === "true") {
         body.classList.add("dark-mode");
         body.classList.remove("light-mode");
-        toggle.checked = true; // Toggle auf "checked" setzen
+        if (toggle) toggle.checked = true;
     } else {
         body.classList.add("light-mode");
         body.classList.remove("dark-mode");
-        toggle.checked = false; // Toggle auf "unchecked" setzen
+        if (toggle) toggle.checked = false;
     }
 
-    // Event Listener für den Toggle-Button (Dark/Light Mode)
-    toggle.addEventListener("change", function () {
-        if (toggle.checked) {
-            body.classList.remove("light-mode");
-            body.classList.add("dark-mode");
-            localStorage.setItem("darkmode", "true"); // Modus speichern
-        } else {
-            body.classList.remove("dark-mode");
-            body.classList.add("light-mode");
-            localStorage.setItem("darkmode", "false"); // Modus speichern
+    // Toggle wechseln
+    if (toggle) {
+        toggle.addEventListener("change", function () {
+            if (toggle.checked) {
+                body.classList.add("dark-mode");
+                body.classList.remove("light-mode");
+                localStorage.setItem("darkmode", "true");
+            } else {
+                body.classList.add("light-mode");
+                body.classList.remove("dark-mode");
+                localStorage.setItem("darkmode", "false");
+            }
+        });
+    }
+
+    // ================================
+    // Hamburger-Menü
+    // ================================
+    if (menuIcon && menu) {
+        menuIcon.addEventListener("click", function () {
+            menu.style.right = (menu.style.right === "0px") ? "-250px" : "0px";
+        });
+    }
+
+    // ================================
+    // 🤖 KI-CHAT (OLLAMA)
+    // ================================
+    const chatForm = document.querySelector("#chatForm");
+    const chatInput = document.querySelector("#chatInput");
+    const chatBox = document.querySelector("#chatBox");
+
+    if (!chatForm || !chatInput || !chatBox) return;
+
+    chatForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        // User Message anzeigen
+        chatBox.innerHTML += `
+            <div class="chat-user">
+                👤 ${escapeHtml(message)}
+            </div>
+        `;
+        chatInput.value = "";
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Ladeanzeige
+        const loadingId = "loading-" + Date.now();
+        chatBox.innerHTML += `
+            <div class="chat-bot" id="${loadingId}">
+                🤖 KI denkt nach...
+            </div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const formData = new FormData();
+            formData.append("message", message);
+
+            const response = await fetch("/chat", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+            const answer = data.answer || "Keine Antwort erhalten.";
+
+            // Ladeanzeige ersetzen
+            const loadingEl = document.getElementById(loadingId);
+            if (loadingEl) {
+                loadingEl.innerHTML = `
+                    🤖 ${formatAnswer(answer)}
+                `;
+            }
+        } catch (error) {
+            const loadingEl = document.getElementById(loadingId);
+            if (loadingEl) {
+                loadingEl.innerHTML =
+                    `<span style="color:red;">🤖 Fehler bei der KI-Verarbeitung</span>`;
+            }
         }
+
+        chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    // Event Listener für das Hamburger-Menü
-    menuIcon.addEventListener("click", function () {
-        // Menü ein-/ausblenden
-        if (menu.style.right === "0px") {
-            menu.style.right = "-250px"; // Menü schließen
-        } else {
-            menu.style.right = "0px"; // Menü öffnen
-        }
-    });
+    // ================================
+    // Hilfsfunktionen
+    // ================================
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    function formatAnswer(text) {
+        return escapeHtml(text).replace(/\n/g, "<br>");
+    }
 });

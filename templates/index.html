@@ -170,7 +170,7 @@ input:checked + .slider:before {
     padding: 20px;
     border-right: 1px solid #ccc;
     box-shadow: 2px 0 8px rgba(0,0,0,0.2);
-    transform: translateX(-100%); /* komplett unsichtbar */
+    transform: translateX(-100%);
     transition: transform 0.3s ease;
 }
 
@@ -194,6 +194,18 @@ input:checked + .slider:before {
 details {
     margin-top: 10px;
 }
+
+/* ===== KI CHAT (NEU, NUR ERGÄNZT) ===== */
+#chatBox {
+    height: 220px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: var(--bg);
+    margin-bottom: 10px;
+}
+.chat-user { font-weight: bold; }
+.chat-bot { margin-bottom: 12px; }
 </style>
 
 <script>
@@ -208,25 +220,35 @@ window.onload = function () {
     const closeBtn = document.getElementById('closeSidebar');
     const modalToggle = document.getElementById('modalDarkModeToggle');
 
-    // Dark Mode aus LocalStorage laden
     if (localStorage.getItem("darkmode") === "true") {
         document.body.classList.add("dark");
         if (modalToggle) modalToggle.checked = true;
     }
 
-    // Hamburger öffnen
-    menuBtn.addEventListener('click', () => {
-        sidebar.classList.add('active');
-    });
-
-    // Schließen
-    closeBtn.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-    });
-
-    // Dark Mode Toggle
-    if(modalToggle) modalToggle.addEventListener('change', toggleDark);
+    menuBtn.addEventListener('click', () => sidebar.classList.add('active'));
+    closeBtn.addEventListener('click', () => sidebar.classList.remove('active'));
+    if (modalToggle) modalToggle.addEventListener('change', toggleDark);
 };
+
+/* ===== KI CHAT SCRIPT (NEU) ===== */
+async function sendChat() {
+    const input = document.getElementById("chatInput");
+    const chatBox = document.getElementById("chatBox");
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    chatBox.innerHTML += `<div class="chat-user">👤 ${msg}</div>`;
+    input.value = "";
+
+    const formData = new FormData();
+    formData.append("message", msg);
+
+    const res = await fetch("/chat", { method: "POST", body: formData });
+    const data = await res.json();
+
+    chatBox.innerHTML += `‚<div class="chat-bot">🤖 ${data.answer}</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
 </script>
 </head>
 
@@ -238,12 +260,11 @@ window.onload = function () {
         <span id="menuBtn" style="font-size:24px; cursor:pointer; margin-right:10px;">☰</span>
         <a href="/" onclick="location.reload(); return false;"><strong>CyberNet 🔐</strong></a>
     </div>
-
     <div class="nav-center">
-        <a href="#url-scan">🌐 URL‑Scan</a>
-        <a href="#sms-scan">📩 SMS‑Scan</a>
-        <a href="#email-scan">📧 E‑Mail‑Scan</a>
-        <a href="#phone-scan">📞 Telefon‑Scan</a>
+        <a href="#url-scan">🌐 URL-Scan</a>
+        <a href="#sms-scan">📩 SMS-Scan</a>
+        <a href="#email-scan">📧 E-Mail-Scan</a>
+        <a href="#phone-scan">📞 Telefon-Scan</a>
     </div>
 </nav>
 
@@ -264,7 +285,15 @@ window.onload = function () {
 </div>
 {% endif %}
 
-<!-- ================= URL SCAN ================= -->
+<!-- ================= KI CHAT (NEU) ================= -->
+<div class="box">
+    <h2>🤖 KI-Sicherheitsberater</h2>
+    <p>Fragen zu Phishing, Betrug oder verdächtigen Nachrichten.</p>
+    <div id="chatBox"></div>
+    <input type="text" id="chatInput" placeholder="Frage eingeben …">
+    <button onclick="sendChat()">Senden</button>
+</div>
+
 <div class="box" id="url-scan">
 <h2>🌐 URL-Scan</h2>
 <form method="post" action="/check">
@@ -397,4 +426,4 @@ window.onload = function () {
 </div>
 
 </body>
-</html>
+</html> 
