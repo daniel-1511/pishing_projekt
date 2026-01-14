@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from urllib.parse import urlparse
 import subprocess
 
@@ -17,6 +18,7 @@ from scan.phone_scan import scan_phone_number
 # =========================
 app = FastAPI(title="CyberNet Security")
 templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # =========================
 # KI SYSTEM PROMPT (OLLAMA)

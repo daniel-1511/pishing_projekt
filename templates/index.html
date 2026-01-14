@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>CyberNet Security</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/static/style.css">
 
 <style>
 :root {
@@ -194,18 +195,6 @@ input:checked + .slider:before {
 details {
     margin-top: 10px;
 }
-
-/* ===== KI CHAT (NEU, NUR ERGÄNZT) ===== */
-#chatBox {
-    height: 220px;
-    overflow-y: auto;
-    border: 1px solid #ccc;
-    padding: 10px;
-    background-color: var(--bg);
-    margin-bottom: 10px;
-}
-.chat-user { font-weight: bold; }
-.chat-bot { margin-bottom: 12px; }
 </style>
 
 <script>
@@ -230,25 +219,29 @@ window.onload = function () {
     if (modalToggle) modalToggle.addEventListener('change', toggleDark);
 };
 
-/* ===== KI CHAT SCRIPT (NEU) ===== */
+function openChatModal() {
+    const modal = document.getElementById('chatModal');
+    modal.classList.add('active');
+    document.getElementById('chatInput').focus();
+}
+
+function closeChatModal() {
+    const modal = document.getElementById('chatModal');
+    modal.classList.remove('active');
+}
+
 async function sendChat() {
     const input = document.getElementById("chatInput");
     const chatBox = document.getElementById("chatBox");
     const msg = input.value.trim();
     if (!msg) return;
 
-    // Nutzer Nachricht anzeigen
-    chatBox.innerHTML += `<div class="chat-user">👤 ${msg}</div>`;
+    chatBox.innerHTML += '<div class="chat-user">👤 ' + msg + '</div>';
     input.value = "";
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Animierte Ladeanimation
     const loadingId = "loading-" + Date.now();
-    chatBox.innerHTML += `
-        <div class="chat-bot" id="${loadingId}">
-            🤖 <span class="loading-spinner"></span><span class="loading-text">Die KI denkt nach...</span>
-        </div>
-    `;
+    chatBox.innerHTML += '<div class="chat-bot" id="' + loadingId + '">🤖 <span class="loading-spinner"></span><span class="loading-text">Die KI denkt nach...</span></div>';
     chatBox.scrollTop = chatBox.scrollHeight;
 
     const formData = new FormData();
@@ -258,19 +251,40 @@ async function sendChat() {
         const res = await fetch("/chat", { method: "POST", body: formData });
         const data = await res.json();
 
-        // Ladeanzeige mit Antwort ersetzen
         const loadingEl = document.getElementById(loadingId);
         if (loadingEl) {
-            loadingEl.innerHTML = `🤖 ${data.answer}`;
+            loadingEl.innerHTML = '🤖 ' + data.answer;
         }
     } catch (error) {
         const loadingEl = document.getElementById(loadingId);
         if (loadingEl) {
-            loadingEl.innerHTML = `<span style="color:red;">🤖 Fehler bei der KI-Verarbeitung</span>`;
+            loadingEl.innerHTML = '<span style="color:red;">🤖 Fehler bei der KI-Verarbeitung</span>';
         }
     }
     chatBox.scrollTop = chatBox.scrollHeight;
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const chatBtn = document.getElementById('chatButton');
+    const closeBtn = document.getElementById('closeChatModal');
+    const chatInput = document.getElementById('chatInput');
+    
+    if (chatBtn) {
+        chatBtn.addEventListener('click', openChatModal);
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeChatModal);
+    }
+    
+    if (chatInput) {
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChat();
+            }
+        });
+    }
+});
 </script>
 </head>
 
@@ -307,13 +321,25 @@ async function sendChat() {
 </div>
 {% endif %}
 
-<!-- ================= KI CHAT (NEU) ================= -->
-<div class="box">
-    <h2>🤖 KI-Sicherheitsberater</h2>
-    <p>Fragen zu Phishing, Betrug oder verdächtigen Nachrichten.</p>
-    <div id="chatBox"></div>
-    <input type="text" id="chatInput" placeholder="Frage eingeben …">
-    <button onclick="sendChat()">Senden</button>
+<!-- ================= KI CHAT FLOATING BUTTON ================= -->
+<div id="chatButton" class="chat-floating-btn">
+    🤖
+</div>
+
+<!-- ================= KI CHAT MODAL ================= -->
+<div id="chatModal" class="chat-modal">
+    <div class="chat-modal-content">
+        <div class="chat-modal-header">
+            <h2>🤖 KI-Sicherheitsberater</h2>
+            <button id="closeChatModal" class="chat-close-btn">✕</button>
+        </div>
+        <p class="chat-info">Fragen zu Phishing, Betrug oder verdächtigen Nachrichten.</p>
+        <div id="chatBox" class="chat-box"></div>
+        <div class="chat-input-wrapper">
+            <input type="text" id="chatInput" placeholder="Frage eingeben …" class="chat-input">
+            <button onclick="sendChat()" class="chat-send-btn">Senden</button>
+        </div>
+    </div>
 </div>
 
 <div class="box" id="url-scan">
@@ -448,4 +474,4 @@ async function sendChat() {
 </div>
 
 </body>
-</html> 
+</html>
