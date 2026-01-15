@@ -13,19 +13,16 @@ function toggleDark() {
 }
 
 window.onload = function () {
-    const sidebar = document.getElementById('menuSidebar');
-    const menuBtn = document.getElementById('menuBtn');
-    const closeBtn = document.getElementById('closeSidebar');
-    const modalToggle = document.getElementById('modalDarkModeToggle');
+    const darkModeToggle = document.getElementById('darkModeToggle');
 
     if (localStorage.getItem("darkmode") === "true") {
         document.body.classList.add("dark");
-        if (modalToggle) modalToggle.checked = true;
+        if (darkModeToggle) darkModeToggle.checked = true;
     }
 
-    menuBtn.addEventListener('click', () => sidebar.classList.add('active'));
-    closeBtn.addEventListener('click', () => sidebar.classList.remove('active'));
-    if (modalToggle) modalToggle.addEventListener('change', toggleDark);
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('change', toggleDark);
+    }
 };
 
 function openChatModal() {
@@ -102,7 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- ================= NAVIGATION ================= -->
 <nav class="navbar">
     <div class="nav-left">
-        <span id="menuBtn" style="font-size:24px; cursor:pointer; margin-right:10px;">☰</span>
         <a href="/" onclick="location.reload(); return false;"><strong>CyberNet 🔐</strong></a>
     </div>
     <div class="nav-center">
@@ -111,18 +107,15 @@ document.addEventListener('DOMContentLoaded', function() {
         <a href="#email-scan">📧 E-Mail-Scan</a>
         <a href="#phone-scan">📞 Telefon-Scan</a>
     </div>
+    <div class="nav-right">
+        <label class="switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
 </nav>
 
-<!-- ================= SIDEBAR ================= -->
-<div id="menuSidebar">
-    <span id="closeSidebar" class="closeBtn">✖</span>
-    <h3>Menu Liste</h3>
-    <label class="switch" style="margin-top:20px;">
-        <input type="checkbox" id="modalDarkModeToggle">
-        <span class="slider"></span>
-    </label>
-    <p style="margin-top:10px;">Dark Mode aktivieren/deaktivieren</p>
-</div>
+<!-- ================= KI CHAT FLOATING BUTTON ================= -->
 
 {% if error %}
 <div class="box">
