@@ -7,30 +7,56 @@ SUSPICIOUS_LINKS = ["account-login", "verify-now", "update-details"]
 
 # 🤖 KI-Erklärung und Score generieren mit Ollama
 def generate_ai_explanation_email(sender, subject, body, score, status, details):
-    prompt = f"Analysiere diese E-Mail auf Phishing-Risiken. Gib einen Score von 0-100 (0=extrem gefährlich, 100=vollkommen sicher) und erkläre kurz auf Deutsch, warum sie sicher oder gefährlich ist. Format: Score: [zahl]\nErklärung: [text]\n\nAbsender: {sender}, Betreff: {subject}, Inhalt: {body}"
+    prompt = f"""Du bist ein E-Mail-Sicherheits-Profi. Erkläre diese E-Mail wie zu einem Freund - EINFACH!
+
+Von: {sender}
+Betreff: {subject}
+Text: {body[:300]}
+
+ANTWORTE GENAU IN DIESEM FORMAT (strukturiert und übersichtlich):
+
+KURZ (3 Stichpunkte):
+• Punkt 1: (kurz und knapp)
+• Punkt 2: (kurz und knapp)
+• Punkt 3: (kurz und knapp)
+
+DETAILS:
+
+🚨 IST DIESE E-MAIL EIN BETRUG?
+(Ja/Nein + klare Begründung in 1-2 Sätzen)
+
+🎯 WAS WOLLEN DIE BETRÜGER?
+- Ziel 1 (z.B. Passwort klauen, Geld verlangen)
+- Ziel 2
+- Ziel 3
+
+🔴 WARNSIGNALE IN DER E-MAIL:
+- Signal 1 (z.B. "Dringend handeln!")
+- Signal 2
+- Signal 3
+
+📌 ECHTE BEISPIELE:
+(Gib ein oder zwei echte Betrugsbeispiele)
+
+✅ WAS SOLL ICH TUN:
+- Tipp 1 (z.B. nicht auf Links klicken)
+- Tipp 2
+- Tipp 3
+
+---
+
+WICHTIG:
+- KEINE Fachbegriffe
+- Kurz und deutlich
+- Nummeriere und strukturiere alles
+- Verwende Emojis für Übersichtlichkeit"""
+    
     try:
         response = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
-        content = response['message']['content'].strip()
-        
-        # Parse Score und Erklärung
-        lines = content.split('\n')
-        ai_score = score  # Fallback
-        explanation = content
-        
-        for line in lines:
-            if line.lower().startswith('score:'):
-                try:
-                    ai_score = int(line.split(':')[1].strip())
-                    ai_score = max(0, min(100, ai_score))  # Clamp 0-100
-                except:
-                    pass
-            elif line.lower().startswith('erklärung:'):
-                explanation = line.split(':', 1)[1].strip()
-                break
-        
-        return ai_score, explanation
+        explanation = response['message']['content'].strip()
+        return score, explanation
     except Exception as e:
-        return score, ""
+        return score, f"KI-Analyse nicht verfügbar: {str(e)}"
 
 def scan_email(sender, subject, body):
     score = 100

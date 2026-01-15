@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from urllib.parse import urlparse
 import subprocess
+import re
 
 # SCANNER IMPORTE
 from scan.url_scan import scan_url
@@ -11,25 +12,113 @@ from scan.sms_scan import scan_sms
 from scan.email_scan import scan_email
 from scan.phone_scan import scan_phone_number
 
+# HELPER FUNCTION - Parse AI explanation in short and full
+def parse_ai_explanation(text):
+    """Parse AI explanation into short (3 bullets) and full text"""
+    short_text = ""
+    full_text = ""
+    
+    # Split by "DETAILS:" marker
+    if "DETAILS:" in text:
+        parts = text.split("DETAILS:", 1)
+        short_part = parts[0].replace("KURZ (3 Stichpunkte):", "").strip()
+        full_part = parts[1].strip() if len(parts) > 1 else ""
+        
+        # Extract bullet points
+        bullets = [line.strip() for line in short_part.split("\n") if line.strip().startswith("•")]
+        short_text = "\n".join(bullets[:3]) if bullets else short_part[:200]
+        full_text = full_part if full_part else text
+    else:
+        # Fallback: use first 3 lines as short, rest as full
+        lines = text.split("\n")
+        short_text = "\n".join(lines[:3])
+        full_text = text
+    
+    return short_text, full_text
+
+# HELPER FUNCTION - Format AI explanation as HTML
+def format_ai_explanation_html(text):
+    """Convert structured AI text to formatted HTML"""
+    html = ""
+    lines = text.split("\n")
+    i = 0
+    
+    while i < len(lines):
+        line = lines[i].strip()
+        
+        # Skip empty lines
+        if not line:
+            i += 1
+            continue
+        
+        # Headers with emojis (🚨, 🎯, 🔴, 📌, ✅)
+        if any(emoji in line for emoji in ["🚨", "🎯", "🔴", "📌", "✅"]) and ":" in line:
+            html += f"<strong style='color: #2196F3; display: block; margin-top: 12px; margin-bottom: 6px; font-size: 16px;'>{line}</strong>"
+            i += 1
+            
+            # Collect bullet points until next header or end
+            while i < len(lines):
+                next_line = lines[i].strip()
+                if not next_line:
+                    i += 1
+                    continue
+                if any(emoji in next_line for emoji in ["🚨", "🎯", "🔴", "📌", "✅"]) and ":" in next_line:
+                    break
+                if next_line.startswith("-"):
+                    if not html.endswith("<ul>"):
+                        html += "<ul style='margin: 6px 0 12px 0; padding-left: 25px;'>"
+                    html += f"<li>{next_line[1:].strip()}</li>"
+                elif next_line.startswith("•"):
+                    if not html.endswith("<ul>"):
+                        html += "<ul style='margin: 6px 0 12px 0; padding-left: 25px;'>"
+                    html += f"<li>{next_line[1:].strip()}</li>"
+                else:
+                    if html.endswith("</li>"):
+                        html += "</ul>"
+                    html += f"<p style='margin: 8px 0; line-height: 1.6;'>{next_line}</p>"
+                i += 1
+            
+            # Close ul if open
+            if html.count("<ul") > html.count("</ul"):
+                html += "</ul>"
+        else:
+            i += 1
+    
+    return html
+
 # APP SETUP
 app = FastAPI(title="CyberNet Security")
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # KI SYSTEM PROMPT (OLLAMA)
-SYSTEM_PROMPT = """
-Du bist ein IT-Sicherheitsassistent für Studierende.
-Deine Aufgaben:
-- Phishing erklären
-- Verdächtige Inhalte analysieren
-- Sicherheitsratschläge geben
+SYSTEM_PROMPT = """Du bist ein erfahrener Cybersecurity-Profi mit 10+ Jahren Erfahrung in Betrugserkennung.
 
-Regeln:
-- KEINE Phishing-Nachrichten erstellen
-- KEINE Angriffsstrategien erklären
-- Keine Social-Engineering-Anleitungen
-- Verständlich & sachlich antworten
-- Risiko als niedrig, mittel oder hoch bewerten
+DEINE EXPERTISE:
+- Du verstehst Phishing, Betrug und Hacker-Tricks
+- Du kennst alle gängigen Betrugsmuster
+- Du erkennst versteckte Gefahren sofort
+
+ABER: Du erklärst ALLES in einfachen Worten! Keine Fachjargon!
+
+WIE DU ANTWORTEST:
+✓ Nutze einfache Wörter, die jeder versteht
+✓ Erkläre wie zu einem Freund, nicht wie in einem Lehrbuch
+✓ Gib konkrete Beispiele aus dem echten Leben
+✓ Nenne die Gefahren klar und deutlich
+✓ Gib praktische Tipps, was der Nutzer TUN soll
+
+✗ Verwende KEINE Fachbegriffe wie "Trojaner", "Malware", "Phishing-Domain"
+✗ Schreib nicht kompliziert - kurz und verständlich!
+✗ Erstelle NIEMALS Anleitungen für Betrüger
+
+BEISPIEL (Schlecht): "Die URL zeigt Indikatoren für Domain-Typosquatting via SSL-Zertifikat-Anomalien."
+BEISPIEL (Gut): "Die Website sieht aus wie Amazon, ist aber nicht echt. Das ist ein Trick von Betrügern."
+
+ANTWORT-FORMAT:
+1. Warnung in einfachen Worten (was ist das Problem?)
+2. Warum das gefährlich ist (konkrete Beispiele)
+3. Was der Nutzer TUN soll (praktische Tipps)
 """
 
 # TEMPLATE RENDER HELPER
@@ -55,6 +144,28 @@ def render_index(request: Request, **kwargs):
     }
 
     context.update(kwargs)
+    
+    # Parse AI explanations if present
+    if context.get("url_result") and context["url_result"].get("ai_explanation"):
+        short, full = parse_ai_explanation(context["url_result"]["ai_explanation"])
+        context["url_result"]["ai_explanation_short"] = short
+        context["url_result"]["ai_explanation_full"] = format_ai_explanation_html(full)
+    
+    if context.get("email_result") and context["email_result"].get("ai_explanation"):
+        short, full = parse_ai_explanation(context["email_result"]["ai_explanation"])
+        context["email_result"]["ai_explanation_short"] = short
+        context["email_result"]["ai_explanation_full"] = format_ai_explanation_html(full)
+    
+    if context.get("sms_result") and context["sms_result"].get("ai_explanation"):
+        short, full = parse_ai_explanation(context["sms_result"]["ai_explanation"])
+        context["sms_result"]["ai_explanation_short"] = short
+        context["sms_result"]["ai_explanation_full"] = format_ai_explanation_html(full)
+    
+    if context.get("phone_result") and context["phone_result"].get("ai_explanation"):
+        short, full = parse_ai_explanation(context["phone_result"]["ai_explanation"])
+        context["phone_result"]["ai_explanation_short"] = short
+        context["phone_result"]["ai_explanation_full"] = format_ai_explanation_html(full)
+    
     return templates.TemplateResponse("index.html", context)
 
 # STARTSEITE

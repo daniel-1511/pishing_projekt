@@ -97,30 +97,55 @@ EXTREME_RISK_PREFIXES = [
 
 # 🤖 KI-Erklärung und Score generieren mit Ollama
 def generate_ai_explanation_phone(phone_number, score, status, details):
-    prompt = f"Analysiere diese Telefonnummer auf Betrugsrisiken. Gib einen Score von 0-100 (0=extrem gefährlich, 100=vollkommen sicher) und erkläre kurz auf Deutsch, warum sie sicher oder gefährlich ist. Format: Score: [zahl]\nErklärung: [text]\n\nTelefonnummer: {phone_number}"
+    prompt = f"""Du bist ein Telefon-Sicherheits-Profi. Erkläre diese Nummer wie zu einem Freund - EINFACH!
+
+Telefonnummer: {phone_number}
+Probleme: {', '.join([d[0] for d in details]) if details else 'Keine'}
+
+ANTWORTE GENAU IN DIESEM FORMAT (strukturiert und übersichtlich):
+
+KURZ (3 Stichpunkte):
+• Punkt 1: (kurz und knapp)
+• Punkt 2: (kurz und knapp)
+• Punkt 3: (kurz und knapp)
+
+DETAILS:
+
+🚨 IST DIESE NUMMER VERDÄCHTIG?
+(Ja/Nein + klare Begründung in 1-2 Sätzen)
+
+🎯 WAS IST DAS RISIKO?
+- Risiko 1 (z.B. Betrüger, Premium-SMS, Erpresser)
+- Risiko 2
+- Risiko 3
+
+🔴 WARNSIGNALE:
+- Signal 1 (z.B. unbekannte Nummer, Vorwahl merkwürdig)
+- Signal 2
+- Signal 3
+
+📌 ECHTE BEISPIELE:
+(Gib ein oder zwei echte Betrugsbeispiele von verdächtigen Nummern)
+
+✅ WAS SOLL ICH TUN:
+- Tipp 1 (z.B. nicht annehmen)
+- Tipp 2
+- Tipp 3
+
+---
+
+WICHTIG:
+- KEINE Fachbegriffe
+- Kurz und deutlich
+- Nummeriere und strukturiere alles
+- Verwende Emojis für Übersichtlichkeit"""
+    
     try:
         response = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
-        content = response['message']['content'].strip()
-        
-        # Parse Score und Erklärung
-        lines = content.split('\n')
-        ai_score = score  # Fallback
-        explanation = content
-        
-        for line in lines:
-            if line.lower().startswith('score:'):
-                try:
-                    ai_score = int(line.split(':')[1].strip())
-                    ai_score = max(0, min(100, ai_score))  # Clamp 0-100
-                except:
-                    pass
-            elif line.lower().startswith('erklärung:'):
-                explanation = line.split(':', 1)[1].strip()
-                break
-        
-        return ai_score, explanation
+        explanation = response['message']['content'].strip()
+        return score, explanation
     except Exception as e:
-        return score, ""
+        return score, f"KI-Analyse nicht verfügbar: {str(e)}"
 
 def scan_phone_number(phone_number: str):
     phone_number = phone_number.strip().lower()

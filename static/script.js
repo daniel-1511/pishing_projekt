@@ -1,37 +1,28 @@
-// Light-/Dark-Mode Toggle Switch und Hamburger-Menü
+// Hamburger-Menü und Dark/Light Mode Toggle
 document.addEventListener("DOMContentLoaded", function () {
-    const toggle = document.querySelector("#darkModeToggle");
+    const themeToggle = document.querySelector("#themeToggle");
     const body = document.body;
     const menu = document.querySelector("#sideMenu");
     const menuIcon = document.querySelector(".menu-icon");
 
-    // Dark / Light Mode beim Laden
+    // Dark/Light Mode beim Laden
     if (localStorage.getItem("darkmode") === "true") {
         body.classList.add("dark-mode");
-        body.classList.remove("light-mode");
-        if (toggle) toggle.checked = true;
+        if (themeToggle) themeToggle.checked = true;
     } else {
-        body.classList.add("light-mode");
         body.classList.remove("dark-mode");
-        if (toggle) toggle.checked = false;
+        if (themeToggle) themeToggle.checked = false;
     }
 
-    // Toggle wechseln
-    if (toggle) {
-        toggle.addEventListener("change", function () {
-            if (toggle.checked) {
-                body.classList.add("dark-mode");
-                body.classList.remove("light-mode");
-                localStorage.setItem("darkmode", "true");
-            } else {
-                body.classList.add("light-mode");
-                body.classList.remove("dark-mode");
-                localStorage.setItem("darkmode", "false");
-            }
+    // Theme Toggle Event
+    if (themeToggle) {
+        themeToggle.addEventListener("change", function () {
+            body.classList.toggle("dark-mode");
+            const isDark = body.classList.contains("dark-mode");
+            localStorage.setItem("darkmode", isDark ? "true" : "false");
         });
     }
 
-    // Hamburger-Menü
     if (menuIcon && menu) {
         menuIcon.addEventListener("click", function () {
             menu.style.right = (menu.style.right === "0px") ? "-250px" : "0px";

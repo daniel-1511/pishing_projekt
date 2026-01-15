@@ -7,25 +7,13 @@
 <link rel="stylesheet" href="/static/style.css">
 
 <script>
-function toggleDark() {
-    document.body.classList.toggle("dark");
-    localStorage.setItem("darkmode", document.body.classList.contains("dark"));
-}
-
 window.onload = function () {
     const sidebar = document.getElementById('menuSidebar');
     const menuBtn = document.getElementById('menuBtn');
     const closeBtn = document.getElementById('closeSidebar');
-    const modalToggle = document.getElementById('modalDarkModeToggle');
-
-    if (localStorage.getItem("darkmode") === "true") {
-        document.body.classList.add("dark");
-        if (modalToggle) modalToggle.checked = true;
-    }
 
     menuBtn.addEventListener('click', () => sidebar.classList.add('active'));
     closeBtn.addEventListener('click', () => sidebar.classList.remove('active'));
-    if (modalToggle) modalToggle.addEventListener('change', toggleDark);
 };
 
 function openChatModal() {
@@ -103,10 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <nav class="navbar">
     <div class="nav-left">
         <a href="/" onclick="location.reload(); return false;"><strong>CyberNet 🔐</strong></a>
-        <label class="switch" style="margin-left:20px;">
-            <input type="checkbox" id="modalDarkModeToggle">
-            <span class="slider"></span>
-        </label>
     </div>
     <div class="nav-center">
         <a href="#url-scan">🌐 URL-Scan</a>
@@ -114,17 +98,18 @@ document.addEventListener('DOMContentLoaded', function() {
         <a href="#email-scan">📧 E-Mail-Scan</a>
         <a href="#phone-scan">📞 Telefon-Scan</a>
     </div>
+    <div class="nav-right">
+        <label class="theme-switch">
+            <input type="checkbox" id="themeToggle" class="theme-switch-input">
+            <span class="theme-switch-slider"></span>
+        </label>
+    </div>
 </nav>
 
 <!-- ================= SIDEBAR ================= -->
 <div id="menuSidebar">
     <span id="closeSidebar" class="closeBtn">✖</span>
     <h3>Menu Liste</h3>
-    <label class="switch" style="margin-top:20px;">
-        <input type="checkbox" id="modalDarkModeToggle">
-        <span class="slider"></span>
-    </label>
-    <p style="margin-top:10px;">Dark Mode aktivieren/deaktivieren</p>
 </div>
 
 {% if error %}
@@ -176,10 +161,27 @@ document.addEventListener('DOMContentLoaded', function() {
     </ul>
 </details>
 {% if url_result.ai_explanation %}
-<details open>
-    <summary><strong>🤖 KI-Erklärung</strong></summary>
-    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ url_result.ai_explanation }}</pre>
-</details>
+<div class="ai-explanation-container">
+    <strong>🤖 KI-Erklärung</strong>
+    <div class="ai-explanation-short">
+        <ul>
+        {% for line in url_result.ai_explanation_short.split('\n') %}
+            {% if line.strip().startswith('•') %}
+            <li>{{ line.replace('•', '').strip() }}</li>
+            {% endif %}
+        {% endfor %}
+        </ul>
+    </div>
+    {% if url_result.ai_explanation_full %}
+    <div class="ai-explanation-full" id="ai-full-url">
+        {{ url_result.ai_explanation_full|safe }}
+    </div>
+    <button class="expand-btn" onclick="toggleExplanation(this, 'ai-full-url')">
+        <span class="expand-arrow">▼</span>
+        Weitere Informationen
+    </button>
+    {% endif %}
+</div>
 {% endif %}
 {% endif %}
 </div>
@@ -218,10 +220,27 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 {% endif %}
 {% if sms_result.ai_explanation %}
-<details open>
-    <summary><strong>🤖 KI-Erklärung</strong></summary>
-    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ sms_result.ai_explanation }}</pre>
-</details>
+<div class="ai-explanation-container">
+    <strong>🤖 KI-Erklärung</strong>
+    <div class="ai-explanation-short">
+        <ul>
+        {% for line in sms_result.ai_explanation_short.split('\n') %}
+            {% if line.strip().startswith('•') %}
+            <li>{{ line.replace('•', '').strip() }}</li>
+            {% endif %}
+        {% endfor %}
+        </ul>
+    </div>
+    {% if sms_result.ai_explanation_full %}
+    <div class="ai-explanation-full" id="ai-full-sms">
+        {{ sms_result.ai_explanation_full|safe }}
+    </div>
+    <button class="expand-btn" onclick="toggleExplanation(this, 'ai-full-sms')">
+        <span class="expand-arrow">▼</span>
+        Weitere Informationen
+    </button>
+    {% endif %}
+</div>
 {% endif %}
 
 {% endif %}
@@ -255,10 +274,27 @@ document.addEventListener('DOMContentLoaded', function() {
 </details>
 {% endif %}
 {% if email_result.ai_explanation %}
-<details open>
-    <summary><strong>🤖 KI-Erklärung</strong></summary>
-    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ email_result.ai_explanation }}</pre>
-</details>
+<div class="ai-explanation-container">
+    <strong>🤖 KI-Erklärung</strong>
+    <div class="ai-explanation-short">
+        <ul>
+        {% for line in email_result.ai_explanation_short.split('\n') %}
+            {% if line.strip().startswith('•') %}
+            <li>{{ line.replace('•', '').strip() }}</li>
+            {% endif %}
+        {% endfor %}
+        </ul>
+    </div>
+    {% if email_result.ai_explanation_full %}
+    <div class="ai-explanation-full" id="ai-full-email">
+        {{ email_result.ai_explanation_full|safe }}
+    </div>
+    <button class="expand-btn" onclick="toggleExplanation(this, 'ai-full-email')">
+        <span class="expand-arrow">▼</span>
+        Weitere Informationen
+    </button>
+    {% endif %}
+</div>
 {% endif %}
 {% endif %}
 </div>
@@ -288,13 +324,91 @@ document.addEventListener('DOMContentLoaded', function() {
 </details>
 {% endif %}
 {% if phone_result.ai_explanation %}
-<details open>
-    <summary><strong>🤖 KI-Erklärung</strong></summary>
-    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ phone_result.ai_explanation }}</pre>
-</details>
+<div class="ai-explanation-container">
+    <strong>🤖 KI-Erklärung</strong>
+    <div class="ai-explanation-short">
+        <ul>
+        {% for line in phone_result.ai_explanation_short.split('\n') %}
+            {% if line.strip().startswith('•') %}
+            <li>{{ line.replace('•', '').strip() }}</li>
+            {% endif %}
+        {% endfor %}
+        </ul>
+    </div>
+    {% if phone_result.ai_explanation_full %}
+    <div class="ai-explanation-full" id="ai-full-phone">
+        {{ phone_result.ai_explanation_full|safe }}
+    </div>
+    <button class="expand-btn" onclick="toggleExplanation(this, 'ai-full-phone')">
+        <span class="expand-arrow">▼</span>
+        Weitere Informationen
+    </button>
+    {% endif %}
+</div>
 {% endif %}
 {% endif %}
 </div>
+
+<script>
+// Dark/Light Mode Funktionalität - ROBUST
+(function() {
+    // Initialisierung beim Laden
+    function initTheme() {
+        const themeToggle = document.querySelector("#themeToggle");
+        const body = document.body;
+
+        // Dark Mode beim Laden
+        if (localStorage.getItem("darkmode") === "true") {
+            body.classList.add("dark-mode");
+            if (themeToggle) {
+                themeToggle.checked = true;
+            }
+        } else {
+            body.classList.remove("dark-mode");
+            if (themeToggle) {
+                themeToggle.checked = false;
+            }
+        }
+
+        // Event Listener für Theme Toggle
+        if (themeToggle) {
+            themeToggle.addEventListener("change", function() {
+                console.log("Theme toggle clicked - checked:", this.checked);
+                if (this.checked) {
+                    body.classList.add("dark-mode");
+                    localStorage.setItem("darkmode", "true");
+                    console.log("Dark mode enabled");
+                } else {
+                    body.classList.remove("dark-mode");
+                    localStorage.setItem("darkmode", "false");
+                    console.log("Dark mode disabled");
+                }
+            });
+        }
+    }
+
+    // Wenn DOM bereit ist, initialisieren
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initTheme);
+    } else {
+        initTheme();
+    }
+})();
+
+// Toggle AI Explanation Full Text
+function toggleExplanation(button, elementId) {
+    const fullText = document.getElementById(elementId);
+    const arrow = button.querySelector('.expand-arrow');
+    
+    if (fullText.style.display === 'none' || fullText.style.display === '') {
+        fullText.style.display = 'block';
+        button.classList.add('expanded');
+    } else {
+        fullText.style.display = 'none';
+        button.classList.remove('expanded');
+    }
+}
+</script>
 
 </body>
 </html>

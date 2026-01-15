@@ -69,30 +69,50 @@ def http_status_text(code):
 
 # 🤖 KI-Erklärung und Score generieren mit Ollama
 def generate_ai_explanation(url, score, status, details):
-    prompt = f"Analysiere diese URL auf Phishing-Risiken. Gib einen Score von 0-100 (0=extrem gefährlich, 100=vollkommen sicher) und erkläre kurz auf Deutsch, warum sie sicher oder gefährlich ist. Format: Score: [zahl]\nErklärung: [text]\n\nURL: {url}"
+    prompt = f"""Du bist ein Website-Sicherheits-Profi. Erkläre diese URL wie zu einem Freund - EINFACH und VERSTÄNDLICH!
+
+URL: {url}
+Probleme gefunden: {', '.join([d[0] for d in details]) if details else 'Keine Probleme'}
+
+ANTWORTE GENAU IN DIESEM FORMAT (strukturiert und übersichtlich):
+
+KURZ (3 Stichpunkte):
+• Punkt 1: (kurz und knapp)
+• Punkt 2: (kurz und knapp)
+• Punkt 3: (kurz und knapp)
+
+DETAILS:
+
+🔴 WARNSIGNALE:
+- Signal 1
+- Signal 2
+- Signal 3
+
+💡 ERKLÄRUNG:
+(2-3 Sätze, was das Problem ist, in einfachen Worten)
+
+📌 ECHTE BEISPIELE:
+(Gib ein oder zwei echte Beispiele, wann dieser Trick verwendet wurde)
+
+✅ WAS SOLL ICH TUN:
+- Tipp 1
+- Tipp 2
+- Tipp 3
+
+---
+
+WICHTIG:
+- Nutze KEINE Fachbegriffe
+- Schreib kurz und deutlich
+- Nummeriere und strukturiere alles
+- Verwende Emojis und Bindestriche für Übersichtlichkeit"""
+    
     try:
         response = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
-        content = response['message']['content'].strip()
-        
-        # Parse Score und Erklärung
-        lines = content.split('\n')
-        ai_score = score  # Fallback
-        explanation = content
-        
-        for line in lines:
-            if line.lower().startswith('score:'):
-                try:
-                    ai_score = int(line.split(':')[1].strip())
-                    ai_score = max(0, min(100, ai_score))  # Clamp 0-100
-                except:
-                    pass
-            elif line.lower().startswith('erklärung:'):
-                explanation = line.split(':', 1)[1].strip()
-                break
-        
-        return ai_score, explanation
+        explanation = response['message']['content'].strip()
+        return score, explanation
     except Exception as e:
-        return score, ""
+        return score, f"KI-Analyse nicht verfügbar: {str(e)}"
 
 # 🌐 Website Analyse
 def analyze_website(url, debug=False):

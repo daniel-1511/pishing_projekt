@@ -2,102 +2,104 @@ import re
 from typing import Dict, List
 import ollama
 
-# PHISHING-SCHLÜSSELWÖRTER
+# PHISHING-SCHLÜSSELWÖRTER - VERBESSERT
 
 PHISHING_KEYWORDS: Dict[str, List[str]] = {
 
     "familie": [
-        "hallo mama", "hallo papa",
-        "mama", "papa", "mutti", "vati",
-        "mutter", "vater",
+        "hallo mama", "hallo papa", "hi mama", "hi papa",
+        "mama", "papa", "mutti", "vati", "mom", "dad",
+        "mutter", "vater", "liebe mama", "lieber papa",
         "sohn", "tochter", "bruder", "schwester",
-        "oma", "opa",
-        "neue nummer", "handy kaputt",
-        "bitte hilf mir", "ich brauche geld",
-        "in der falle", "verhaftet", "verhaftung",
-        "unfallbericht", "unfall", "krankenhaus",
-        "im ausland", "strand", "problem",
-        "notfall", "notlage", "notwendig",
+        "oma", "opa", "großmutter", "großvater",
+        "neue nummer", "handy kaputt", "neues handy",
+        "bitte hilf mir", "hilf mir", "ich brauche geld", "brauch geld",
+        "in der falle", "verhaftet", "verhaftung", "verhastet",
+        "unfallbericht", "unfall", "krankenhaus", "notfall",
+        "im ausland", "strand", "problem", "hilfe",
+        "notlage", "notwendig", "dringend", "eilig",
         "tante", "onkel", "cousin", "cousine",
-        "enkel", "enkelin"
+        "enkel", "enkelin", "verwandt", "familienangehörig"
     ],
 
     "geld": [
-        "überweis", "überweisung", "zahlung",
-        "zahlen", "bezahlen", "geld",
-        "betrag", "rechnung", "paypal",
-        "bankdaten", "kontonummer", "blz",
-        "kreditkarte", "visa", "mastercard",
-        "psc", "cvv", "prüfziffer",
-        "kontoauszug", "kontostand",
-        "vermögen", "erbe", "erbschaft",
-        "kredite", "darlehn"
+        "überweis", "überweisung", "zahlung", "bezahlen",
+        "geld", "betrag", "euro", "€", "rechnung",
+        "paypal", "banktransfer", "sepa",
+        "bankdaten", "kontonummer", "iban", "blz",
+        "kreditkarte", "visa", "mastercard", "amex",
+        "psc", "cvv", "prüfziffer", "cvv2",
+        "kontoauszug", "kontostand", "kontoführung",
+        "vermögen", "erbe", "erbschaft", "hinterlassenschaft",
+        "kredite", "darlehn", "zinsen", "gebühren",
+        "schulden", "zahle", "bezahle", "vergütung"
     ],
 
     "bank": [
-        "bank", "konto", "iban",
-        "login", "verifizieren",
+        "bank", "konto", "iban", "bankverbindung",
+        "login", "verifizieren", "verifizier", "bestätigen",
         "passwort", "pin", "tan", "code",
-        "bestätigung", "authentifizierung",
-        "zwei-faktor", "2fa",
-        "sicherheit", "sicherheitscode",
-        "legitimation", "verifikation",
-        "identität", "identitätsnachweis",
-        "adresse verifizieren", "kontobestätigung",
-        "benutzername", "passwort zurücksetzen"
+        "bestätigung", "authentifizierung", "authentifizier",
+        "zwei-faktor", "2fa", "zweifaktor",
+        "sicherheit", "sicherheitscode", "sicherheitsabfrage",
+        "legitimation", "verifikation", "verifizier",
+        "identität", "identitätsnachweis", "ausweis",
+        "adresse verifizieren", "kontobestätigung", "kontoverifizier",
+        "benutzername", "passwort zurücksetzen", "pw", "password"
     ],
 
     "gewinn": [
-        "gewonnen", "gewinn", "preis",
-        "jackpot", "lotterie",
-        "gutschein", "bonus", "belohnung",
-        "glückwunsch", "herzlichen glückwunsch",
-        "sie sind auserwählt", "auserwählt",
-        "gewinnspiel", "gewinnchance",
-        "iphone", "ipad", "playstation",
-        "amazon gutschein", "itunes gutschein",
-        "preisgeld", "geldpreis"
+        "gewonnen", "gewinn", "preis", "gewinner",
+        "jackpot", "lotterie", "gewinnspiel",
+        "gutschein", "bonus", "belohnung", "prämie",
+        "glückwunsch", "herzlichen glückwunsch", "glück",
+        "sie sind auserwählt", "auserwählt", "gewählt",
+        "gewinnchance", "chance", "los",
+        "iphone", "ipad", "playstation", "ps5",
+        "amazon gutschein", "itunes gutschein", "guthaben",
+        "preisgeld", "geldpreis", "hauptgewinn"
     ],
 
     "gratis": [
-        "gratis", "kostenlos", "free",
-        "umsonst", "geschenk", "0€",
-        "kostenlose", "null euro",
-        "keine gebühren", "gebührenfrei"
+        "gratis", "kostenlos", "free", "free download",
+        "umsonst", "geschenk", "0€", "kostenlos",
+        "kostenlose", "null euro", "ohne kosten",
+        "keine gebühren", "gebührenfrei", "kostenfrei",
+        "umsonst", "freebie", "frei", "ohne zahlung"
     ],
 
     "druck": [
-        "dringend", "sofort", "jetzt",
-        "letzte chance", "heute", "frist",
-        "eile", "eilig", "zeitlich begrenzt",
-        "endet heute", "läuft ab", "ablaufdatum",
-        "auslaufen", "verfällt", "verfallsdatum",
-        "handeln sie jetzt", "zögern sie nicht",
-        "schnell handeln", "beeilen sie sich",
-        "nicht verpassen", "verpassen sie nicht",
-        "begrenzte zeit", "limitiert"
+        "dringend", "sofort", "jetzt", "gleich",
+        "letzte chance", "heute", "frist", "deadline",
+        "eile", "eilig", "zeitlich begrenzt", "begrenzt",
+        "endet heute", "läuft ab", "ablaufdatum", "ablauf",
+        "verfällt", "verfallsdatum", "gültig bis",
+        "handeln sie jetzt", "zögern sie nicht", "nicht warten",
+        "schnell handeln", "beeilen sie sich", "beeilt",
+        "nicht verpassen", "verpassen sie nicht", "don't miss",
+        "begrenzte zeit", "limitiert", "limited", "nur heute"
     ],
 
     "link": [
-        "hier klicken", "klick hier",
-        "jetzt bestätigen",
-        "link", "anklicken", "anmelden",
-        "aktivieren", "folgen",
-        "besuchen", "öffnen", "öffne",
-        "bestätigung hier", "klicken sie hier",
-        "tinyurl", "bit.ly", "shortened",
-        "kurz.link", "url", "website"
+        "hier klicken", "klick hier", "hier", "klicken",
+        "jetzt bestätigen", "bestätigen", "aktivieren",
+        "link", "anklicken", "anmelden", "login",
+        "aktivieren", "folgen", "besuchen", "öffnen",
+        "öffne", "bestätigung hier", "klicken sie hier",
+        "tinyurl", "bit.ly", "shortened", "url",
+        "kurz.link", "short", "website", "webseite",
+        "download", "laden", "herunterladen"
     ],
 
     "social_engineering": [
-        "können sie mir helfen", "brauche hilfe",
-        "vertrauen sie mir", "vertrau mir",
+        "können sie mir helfen", "brauche hilfe", "hilf mir",
+        "vertrauen sie mir", "vertrau mir", "trau mir",
         "nur du kannst mir helfen", "nur sie können",
         "frag nicht", "sag niemand", "sag keinem",
-        "erzähl es niemandem", "geheim",
+        "erzähl es niemandem", "geheim", "heimlich",
         "darf keiner wissen", "darf die mama nicht wissen",
-        "streng geheim", "vertraulich",
-        "vertrau mir", "im vertrauen"
+        "streng geheim", "vertraulich", "privat",
+        "vertrau mir", "im vertrauen", "zwischen uns"
     ],
 
     "malware": [
@@ -236,30 +238,57 @@ def analyze_emoji_usage(text: str) -> Dict:
 
 # 🤖 KI-Erklärung und Score generieren mit Ollama
 def generate_ai_explanation_sms(sms_text, score, status, details):
-    prompt = f"Analysiere diese SMS auf Phishing-Risiken. Gib einen Score von 0-100 (0=extrem gefährlich, 100=vollkommen sicher) und erkläre kurz auf Deutsch, warum sie sicher oder gefährlich ist. Format: Score: [zahl]\nErklärung: [text]\n\nSMS: {sms_text}"
+    prompt = f"""Du bist ein SMS-Sicherheits-Profi der Polizei - Erkläre diese Nachricht wie zu einem guten Freund. EINFACH UND KLAR!
+
+SMS-TEXT ZU ANALYSIEREN: {sms_text}
+
+ANTWORTE IN GENAU DIESEM FORMAT:
+
+==== KURZ (3 Punkte) ====
+• Punkt 1: [Hauptproblem in 10 Worten]
+• Punkt 2: [Zweites Problem in 10 Worten]
+• Punkt 3: [Konkrete Warnung in 10 Worten]
+
+==== DETAILS ====
+
+🚨 IST DAS EIN BETRUG?
+JA/NEIN + kurze Begründung (max 2 Sätze, einfache Worte)
+
+🎯 WAS WOLLEN DIE BETRÜGER?
+- Ziel 1 (z.B. "Mein Geld klauen", "Meine Login-Daten", "Meine Kreditkarte")
+- Ziel 2
+- Ziel 3
+
+🔴 WARNSIGNALE IN DIESER SMS:
+- Signal 1 (z.B. "Dringend = Zeitdruck", "Unbekannte Nummer = Verdächtig")
+- Signal 2
+- Signal 3
+
+📌 ECHTE BEISPIELE VON BETRÜGERN:
+"Lieber Sohn, bin in Notlage. Brauch 500€ auf dieses Konto..." [= ENKELTRICK]
+"Du hast einen Preis gewonnen! Klick hier..." [= GEWINN-BETRUG]
+
+✅ SO SCHÜTZT DU DICH:
+- Tipp 1 (z.B. "Nicht antworten oder klicken")
+- Tipp 2 (z.B. "Anzrufen unter alter Nummer")
+- Tipp 3 (z.B. "Polizei anrufen wenn verdächtig")
+
+---
+
+REGELN BEFOLGEN:
+✓ NUR EINFACHE DEUTSCHE WORTE (keine Fachbegriffe)
+✓ SEHR KURZ (max 3-4 Zeilen pro Abschnitt)
+✓ DIREKTE ANSPRACHE ("Du", "Dein")
+✓ KONKRETE BEISPIELE AUS ECHTEN BETRÜGEREIEN
+✓ SOFORTIGE TIPPS ZUM HANDELN
+✓ KEINE WIEDERHOLUNGEN"""
+    
     try:
         response = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
-        content = response['message']['content'].strip()
-        
-        # Parse Score und Erklärung
-        lines = content.split('\n')
-        ai_score = score  # Fallback
-        explanation = content
-        
-        for line in lines:
-            if line.lower().startswith('score:'):
-                try:
-                    ai_score = int(line.split(':')[1].strip())
-                    ai_score = max(0, min(100, ai_score))  # Clamp 0-100
-                except:
-                    pass
-            elif line.lower().startswith('erklärung:'):
-                explanation = line.split(':', 1)[1].strip()
-                break
-        
-        return ai_score, explanation
+        explanation = response['message']['content'].strip()
+        return score, explanation
     except Exception as e:
-        return score, ""
+        return score, f"KI-Analyse nicht verfügbar: {str(e)}"
 
 # SMS-ANALYSE
 
@@ -378,51 +407,66 @@ def scan_sms(sms_text: str) -> Dict:
         ))
 
     # 🎯 KOMBOS - SEHR GEFÄHRLICH
+    # Familie + Geld/Druck = KLASSISCHER BETRUG (Enkeltrick)
     if found["familie"] and (found["geld"] or found["druck"]):
-        score -= 50
+        score -= 65
         high_risk_indicators += 2
+        combined_keywords = (found["familie"] + found["geld"] + found["druck"])[:3]
         details.append((
             "🔴🔴 KRITISCH: Familie + Geld/Druck",
+            65,
+            f"Klassischer Enkeltrick/Oma-Betrug! Keywords: {', '.join(combined_keywords)}"
+        ))
+        family_verification["active"] = True
+        family_verification["title"] = "🚨 KRITISCHE WARNUNG - ENKELTRICK ERKANNT!"
+
+    # Gewinn/Gratis + Druck = FAST SICHER BETRUG
+    elif (found["gewinn"] or found["gratis"]) and found["druck"]:
+        score -= 60
+        high_risk_indicators += 1
+        details.append((
+            "🔴 HOCHRISIKO: Gewinn-Betrug mit Zeitdruck",
+            60,
+            "\"Gewinnen Sie JETZT\" ist ein klassisches Betrugsmuster"
+        ))
+
+    # Bank + Link + Druck = PHISHING
+    elif found["bank"] and found["link"] and found["druck"]:
+        score -= 65
+        high_risk_indicators += 1
+        details.append((
+            "🔴 BANK-PHISHING WARNUNG",
+            65,
+            "Verdacht auf Phishing mit gefälschtem Bank-Link"
+        ))
+
+    # Geld + Druck + Link = ZAHLUNGS-PHISHING
+    elif found["geld"] and found["druck"] and found["link"]:
+        score -= 60
+        high_risk_indicators += 1
+        details.append((
+            "🔴 ZAHLUNG-PHISHING",
+            60,
+            "Versuch, Sie zu schneller Zahlung zu manipulieren"
+        ))
+
+    # 🎁 GEWINN / GRATIS (einzeln)
+    elif (found["gewinn"] or found["gratis"]):
+        score -= 50
+        high_risk_indicators += 1
+        details.append((
+            "🟠 Gewinn-/Gratisversprechen",
             50,
-            "Klassischer \"Oma-Betrug\" oder ähnlich"
+            "Verdächtig: Ungefragte Gewinnversprechen sind typische Betrugsmasche"
         ))
-
-    if (found["gewinn"] or found["gratis"]) and found["druck"]:
-        score -= 45
-        high_risk_indicators += 1
-        details.append((
-            "🔴 GEWINN-BETRUG MIT DRUCK",
-            45,
-            "\"Gewinnen Sie JETZT\" ist fast immer Betrug"
-        ))
-
-    if found["bank"] and found["druck"] and (found["gewinn"] or found["gratis"]):
-        score -= 40
-        high_risk_indicators += 1
-        details.append((
-            "🔴 BANK-PHISHING",
-            40,
-            "Verdacht auf Banking-Trojan oder Phishing"
-        ))
-
-    # 🎁 GEWINN / GRATIS
-    if found["gewinn"] or found["gratis"]:
-        if score > 50:  # Nur wenn noch nicht schwer geprägt
-            score -= 50
-            high_risk_indicators += 1
-            details.append((
-                "🔴 Gewinn-/Gratisversprechen",
-                50,
-                "Typisches Betrugsmuster - Gewinne gab es nicht"
-            ))
 
     # 💰 GELD + CODE (sehr verdächtig)
     if found["geld"] and found["bank"]:
-        score -= 35
+        score -= 40
         details.append((
             "🔴 FINANZIELLE DATEN GEFORDERT",
-            35,
-            "Niemals Bankdaten, TANs oder PINs mitteilen!"
+            40,
+            "Niemals Bankdaten, TANs oder PINs mitteilen! Das ist Phishing!"
         ))
 
     # 🔗 LINKS ANALYSE
@@ -445,11 +489,11 @@ def scan_sms(sms_text: str) -> Dict:
     # 🔢 ZAHLENCODE ANALYSE
     codes = re.findall(r"\b\d{4,6}\b", sms_text)
     if codes:
-        score -= 20
+        score -= 25
         details.append((
-            "⚠️ Zahlencode(s) erkannt",
-            20,
-            f"Codes wie {', '.join(codes[:3])} können TANs/PINs sein - NIE weitergeben!"
+            "🔴 Zahlencode(s) erkannt",
+            25,
+            f"Codes wie {', '.join(codes[:3])} könnten TANs/PINs sein - NIE weitergeben!"
         ))
 
     # 📊 LÄNGE-ANOMALIEN
