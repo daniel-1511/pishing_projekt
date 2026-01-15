@@ -1,4 +1,237 @@
-/* ===== KI CHAT FLOATING BUTTON ===== */
+/* ============================================
+   CYBERNET SECURITY - COMPLETE STYLESHEET
+   ============================================ */
+
+/* ============================================
+   CSS VARIABLES
+   ============================================ */
+:root {
+    --bg: #f5f5f5;
+    --box: #ffffff;
+    --text: #000000;
+}
+
+body.dark {
+    --bg: #121212;
+    --box: #1e1e1e;
+    --text: #f5f5f5;
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 40px;
+    scroll-behavior: smooth;
+    margin: 0;
+    transition: background-color 0.5s, color 0.5s;
+}
+
+/* ============================================
+   NAVBAR
+   ============================================ */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: var(--box);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav-left {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.nav-left a {
+    text-decoration: none;
+    color: var(--text);
+    font-weight: bold;
+}
+
+.nav-left a:hover {
+    text-decoration: underline;
+}
+
+.nav-center {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex: 1;
+}
+
+.nav-center a {
+    text-decoration: none;
+    color: var(--text);
+    font-weight: bold;
+}
+
+.nav-center a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
+   GENERAL ELEMENTS
+   ============================================ */
+.box {
+    background-color: var(--box);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+button {
+    padding: 8px 14px;
+    margin-top: 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background-color: #2196F3;
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #1976D2;
+}
+
+input[type="text"], input[type="email"], textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+/* ============================================
+   PROGRESS BARS
+   ============================================ */
+.bar {
+    width: 100%;
+    background-color: #cccccc;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.bar-inner {
+    height: 20px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bar-inner.red { background-color: red; }
+.bar-inner.orange { background-color: orange; }
+.bar-inner.yellow { background-color: goldenrod; }
+.bar-inner.green { background-color: green; }
+
+/* ============================================
+   SWITCH / TOGGLE
+   ============================================ */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 25px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #ccc;
+    transition: background-color 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 3.5px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+#menuSidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 100%;
+    background-color: var(--box);
+    color: var(--text);
+    z-index: 2000;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+#menuSidebar.active {
+    transform: translateX(0);
+}
+
+#menuSidebar h3 {
+    margin-top: 0;
+}
+
+#menuSidebar .closeBtn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+details {
+    margin-top: 10px;
+}
+
+/* ============================================
+   KI CHAT - FLOATING BUTTON
+   ============================================ */
 .chat-floating-btn {
     position: fixed;
     bottom: 30px;
@@ -29,7 +262,9 @@
     transform: scale(0.95);
 }
 
-/* ===== KI CHAT MODAL ===== */
+/* ============================================
+   KI CHAT - MODAL
+   ============================================ */
 .chat-modal {
     position: fixed;
     bottom: 110px;
@@ -78,7 +313,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #333;
     padding-bottom: 15px;
 }
 
@@ -90,10 +325,6 @@
 
 .dark-mode .chat-modal-header {
     border-bottom-color: #444;
-}
-
-.chat-modal-header {
-    border-bottom-color: #333;
 }
 
 .chat-close-btn {
@@ -150,19 +381,11 @@
 }
 
 .chat-box::-webkit-scrollbar-thumb {
-    background: #ccc;
+    background: #555;
     border-radius: 3px;
 }
 
 .chat-box::-webkit-scrollbar-thumb:hover {
-    background: #999;
-}
-
-.dark-mode .chat-box::-webkit-scrollbar-thumb {
-    background: #555;
-}
-
-.dark-mode .chat-box::-webkit-scrollbar-thumb:hover {
     background: #777;
 }
 
@@ -249,7 +472,9 @@
     color: #fff;
 }
 
-/* Loading Animation */
+/* ============================================
+   LOADING ANIMATION
+   ============================================ */
 .loading-spinner {
     display: inline-block;
     width: 20px;
@@ -274,7 +499,9 @@
     font-weight: bold;
 }
 
-/* Mobile responsivity */
+/* ============================================
+   MOBILE RESPONSIVITY
+   ============================================ */
 @media (max-width: 600px) {
     .chat-modal {
         width: calc(100vw - 40px);
@@ -298,5 +525,14 @@
             opacity: 1;
             transform: translateY(-50%);
         }
+    }
+
+    .nav-center {
+        gap: 15px;
+        font-size: 14px;
+    }
+
+    body {
+        padding: 20px;
     }
 }
