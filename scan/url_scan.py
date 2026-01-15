@@ -125,58 +125,96 @@ def scan_url(url: str, debug=False):
     details = []
     easy_explanation = []
 
-    # 🔐 HTTPS
+    # 🔐 HTTPS (Critical)
     if not url.startswith("https://"):
-        score -= 25
-        details.append(("Keine sichere Verbindung", 25, "Die Seite nutzt kein HTTPS, daher werden Daten unverschlüsselt übertragen."))
-        easy_explanation.append("Die Seite ist nicht sicher verschlüsselt.")
+        score -= 35
+        details.append(("Keine sichere Verbindung (HTTP)", 35, "KRITISCH: Die Seite nutzt kein HTTPS. Daten werden unverschlüsselt übertragen - ideal für Diebe!"))
+        easy_explanation.append("⚠️ KRITISCH: Keine sichere Verbindung!")
 
-    # 🌐 IP-Adresse statt Domain
+    # 🌐 IP-Adresse statt Domain (Critical)
     if re.search(r"(http://|https://)?(\d{1,3}\.){3}\d{1,3}", url):
-        score -= 30
-        details.append(("IP-Adresse verwendet", 30, "Seriöse Seiten nutzen normalerweise einen Domainnamen, nicht nur Zahlen."))
-        easy_explanation.append("Die Adresse enthält nur Zahlen statt eines Namens.")
+        score -= 50
+        details.append(("IP-Adresse statt Domain", 50, "EXTREM VERDÄCHTIG: Seriöse Seiten nutzen niemals nur Zahlen-Adressen!"))
+        easy_explanation.append("⚠️ EXTREM VERDÄCHTIG: Nur Zahlen statt Domain!")
 
-    # ⚠️ Verdächtige Wörter in URL
+    # ⚠️ URL-Verkürzer erkannt
+    if any(shortener in url.lower() for shortener in URL_SHORTENERS):
+        score -= 40
+        details.append(("URL-Verkürzer verwendet", 40, "Phishing-Methode: Die echte Adresse ist versteckt. Vorsicht!"))
+        easy_explanation.append("⚠️ URL-Verkürzer erkannt - versteckte Zielseite!")
+
+    # 🎣 Domain-Typosquatting
+    for phishing_domain in PHISHING_DOMAINS:
+        if phishing_domain in url.lower():
+            # Check for variations
+            if "amaozn" in url.lower() or "amazoon" in url.lower() or "amaz0n" in url.lower():
+                score -= 45
+                details.append(("Domain-Typosquatting (Amazon)", 45, "Betrüger verwenden ähnliche Namen wie echte Seiten!"))
+                easy_explanation.append("⚠️ Verdächtige Amazon-Kopie erkannt!")
+            elif "appl3" in url.lower() or "appie" in url.lower() or "aple" in url.lower():
+                score -= 45
+                details.append(("Domain-Typosquatting (Apple)", 45, "Betrüger verwenden ähnliche Namen wie echte Seiten!"))
+                easy_explanation.append("⚠️ Verdächtige Apple-Kopie erkannt!")
+            elif "micr0soft" in url.lower() or "microsfot" in url.lower():
+                score -= 45
+                details.append(("Domain-Typosquatting (Microsoft)", 45, "Betrüger verwenden ähnliche Namen wie echte Seiten!"))
+                easy_explanation.append("⚠️ Verdächtige Microsoft-Kopie erkannt!")
+
+    # ⚠️ Verdächtige Wörter in URL (erhöht)
     found = [w for w in SUSPICIOUS_WORDS if w in url.lower()]
     if found:
-        deduction = len(found) * 5
+        deduction = len(found) * 8  # Erhöht von 5 zu 8
         score -= deduction
-        details.append(("Verdächtige Begriffe", deduction, f"Die URL enthält typische Betrugsbegriffe: {', '.join(found)}"))
-        easy_explanation.append("Die URL enthält Wörter, die oft bei Betrugsseiten vorkommen.")
+        details.append(("Verdächtige Begriffe in URL", deduction, f"Typische Phishing-Wörter: {', '.join(found)}"))
+        easy_explanation.append(f"⚠️ Verdächtige Wörter: {', '.join(found[:2])}")
 
     # 🌐 Website analysieren
     website = analyze_website(url, debug=debug)
 
     # ❌ Nicht erreichbar
     if not website["reachable"]:
-        score -= 40
-        details.append(("Website nicht erreichbar", 40, "Die Seite antwortet nicht oder es gab einen technischen Fehler."))
-        easy_explanation.append("Die Seite ist nicht erreichbar.")
+        score -= 35
+        details.append(("Website nicht erreichbar", 35, "Seite antwortet nicht - könnte eine gefälschte Seite sein."))
+        easy_explanation.append("⚠️ Seite nicht erreichbar!")
 
     # ❌ Analysefehler
     if website["errors"]:
-        penalty = min(len(website["errors"]) * 10, 40)
+        penalty = min(len(website["errors"]) * 12, 50)
         score -= penalty
-        details.append(("Technische Fehler", penalty, "Fehler bei der Analyse: " + "; ".join(website["errors"])))
+        details.append(("Technische Fehler", penalty, "Mehrere Fehler gefunden: " + "; ".join(website["errors"])))
 
-    # 🔞 NSFW (nur Info)
+    # 🔞 NSFW (höhere Strafe)
     if website["nsfw"]:
-        details.append(("NSFW-Inhalte", 0, "Die Seite enthält Inhalte für Erwachsene. Keine technische Sicherheitswarnung."))
+        score -= 15
+        details.append(("Erwachsenen-Inhalte", 15, "Verdächtige Inhalte erkannt."))
 
-    # 🎰 Casino (nur Info)
+    # 🎰 Casino (höhere Strafe)
     if website["casino"]:
-        details.append(("Glücksspiel", 0, "Die Seite enthält Casino- oder Glücksspiel-Inhalte."))
+        score -= 20
+        details.append(("Casino/Glücksspiel", 20, "Glücksspiel-Inhalte - hohe Betrugsgefahr!"))
+
+    # ⚠️ Zu lange URL (common obfuscation)
+    if len(url) > 100:
+        score -= 10
+        details.append(("Verdächtig lange URL", 10, "Betrüger verstecken echte Adressen in langen URLs."))
+
+    # ⚠️ Zu viele Subdomains
+    subdomain_count = url.count(".")
+    if subdomain_count > 4:
+        score -= 15
+        details.append(("Zu viele Subdomains", 15, "Betrüger nutzen komplexe Subdomains zur Verschleierung."))
 
     score = max(score, 0)
 
-    # 🧠 Status
-    if score <= 10:
-        status, color = "Extrem gefährlich", "red"
-    elif score <= 30:
-        status, color = "Unsicher", "orange"
-    elif score <= 60:
-        status, color = "Potentiell gefährlich", "yellow"
+    # 🧠 Status (strengere Bewertung)
+    if score <= 15:
+        status, color = "EXTREM GEFÄHRLICH ⚠️", "red"
+    elif score <= 35:
+        status, color = "SEHR GEFÄHRLICH", "orange"
+    elif score <= 55:
+        status, color = "VERDÄCHTIG", "yellow"
+    elif score <= 75:
+        status, color = "Eher sicher", "lightgreen"
     else:
         status, color = "Sicher", "green"
 
