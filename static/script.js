@@ -1,15 +1,11 @@
-// ================================
 // Light-/Dark-Mode Toggle Switch und Hamburger-Menü
-// ================================
 document.addEventListener("DOMContentLoaded", function () {
     const toggle = document.querySelector("#darkModeToggle");
     const body = document.body;
     const menu = document.querySelector("#sideMenu");
     const menuIcon = document.querySelector(".menu-icon");
 
-    // ================================
     // Dark / Light Mode beim Laden
-    // ================================
     if (localStorage.getItem("darkmode") === "true") {
         body.classList.add("dark-mode");
         body.classList.remove("light-mode");
@@ -35,18 +31,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // ================================
     // Hamburger-Menü
-    // ================================
     if (menuIcon && menu) {
         menuIcon.addEventListener("click", function () {
             menu.style.right = (menu.style.right === "0px") ? "-250px" : "0px";
         });
     }
 
-    // ================================
     // 🤖 KI-CHAT (OLLAMA)
-    // ================================
     const chatForm = document.querySelector("#chatForm");
     const chatInput = document.querySelector("#chatInput");
     const chatBox = document.querySelector("#chatBox");
@@ -107,9 +99,7 @@ document.addEventListener("DOMContentLoaded", function () {
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    // ================================
     // Hilfsfunktionen
-    // ================================
     function escapeHtml(text) {
         return text
             .replace(/&/g, "&amp;")

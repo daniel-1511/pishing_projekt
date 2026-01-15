@@ -3,9 +3,7 @@ import requests
 import traceback
 from bs4 import BeautifulSoup
 
-# -----------------------------
 # 🔍 Verdächtige Wörter in URL
-# -----------------------------
 SUSPICIOUS_WORDS = [
     "login", "verify", "secure", "bank",
     "account", "update", "free", "bonus",
@@ -18,9 +16,7 @@ NSFW_KEYWORDS = ["porn", "xxx", "sex", "adult", "nude", "camgirl", "escort"]
 # 🎰 Casino / Glücksspiel
 CASINO_KEYWORDS = ["casino", "bet", "poker", "slot", "jackpot", "gambling", "roulette"]
 
-# -----------------------------
 # 🌐 HTTP STATUS TRANSLATION
-# -----------------------------
 HTTP_STATUS_MAP = {
     200: "OK – Seite erfolgreich geladen.",
     201: "Created – Ressource wurde erstellt.",
@@ -42,9 +38,7 @@ HTTP_STATUS_MAP = {
 def http_status_text(code):
     return HTTP_STATUS_MAP.get(code, f"Unbekannter Status ({code})")
 
-# -----------------------------
 # 🌐 Website Analyse
-# -----------------------------
 def analyze_website(url, debug=False):
     results = {
         "reachable": True,
