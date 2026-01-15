@@ -2,6 +2,7 @@ import re
 import requests
 import traceback
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
 # 🔍 Verdächtige Wörter in URL
 SUSPICIOUS_WORDS = [
@@ -16,8 +17,6 @@ NSFW_KEYWORDS = ["porn", "xxx", "sex", "adult", "nude", "camgirl", "escort"]
 # 🎰 Casino / Glücksspiel
 CASINO_KEYWORDS = ["casino", "bet", "poker", "slot", "jackpot", "gambling", "roulette"]
 
-<<<<<<< HEAD
-=======
 # 🎣 Phishing-Domains (Ziele von Betrügern)
 PHISHING_DOMAINS = [
     "amazon", "apple", "google", "facebook", "microsoft", 
@@ -44,8 +43,7 @@ SUSPICIOUS_WORDS_EXTENDED = [
 # Updatersuspicious_words mit erweiterten Begriffen
 SUSPICIOUS_WORDS = SUSPICIOUS_WORDS_EXTENDED
 
-# -----------------------------
->>>>>>> c18f32316df16e74cc56d89316db6f7f07383ae6
+
 # 🌐 HTTP STATUS TRANSLATION
 HTTP_STATUS_MAP = {
     200: "OK – Seite erfolgreich geladen.",
@@ -67,6 +65,30 @@ HTTP_STATUS_MAP = {
 
 def http_status_text(code):
     return HTTP_STATUS_MAP.get(code, f"Unbekannter Status ({code})")
+
+# 🤖 KI-Erklärung generieren (statisch als Fallback)
+def generate_ai_explanation(score, status, details):
+    if score >= 80:
+        base = "Diese URL scheint sicher zu sein. Sie verwendet HTTPS, hat keine verdächtigen Merkmale und die Website ist erreichbar."
+    elif score >= 60:
+        base = "Die URL wirkt größtenteils sicher, aber es gibt einige Warnungen. Überprüfen Sie die Details sorgfältig."
+    elif score >= 40:
+        base = "Diese URL ist verdächtig. Es wurden mehrere potenzielle Risiken gefunden. Seien Sie vorsichtig!"
+    elif score >= 20:
+        base = "Hohes Risiko! Diese URL zeigt starke Anzeichen von Phishing oder Betrug."
+    else:
+        base = "Extrem gefährlich! Vermeiden Sie diese URL unbedingt – hohe Wahrscheinlichkeit eines Angriffs."
+
+    reasons = []
+    for name, points, reason in details[:3]:  # Top 3 Gründe
+        reasons.append(f"- {name}: {reason}")
+
+    if reasons:
+        explanation = f"{base}\n\nHauptgründe:\n" + "\n".join(reasons)
+    else:
+        explanation = base
+
+    return explanation
 
 # 🌐 Website Analyse
 def analyze_website(url, debug=False):
@@ -149,7 +171,33 @@ def scan_url(url: str, debug=False):
     details = []
     easy_explanation = []
 
-    # 🔐 HTTPS (Critical)
+    # � URL-Validierung
+    try:
+        parsed = urlparse(url)
+        if not parsed.scheme or not parsed.netloc:
+            return {
+                "url": url,
+                "score": 0,
+                "status": "UNGÜLTIGE URL",
+                "color": "red",
+                "easy_explanation": ["Ungültige URL-Struktur"],
+                "details": [("Ungültige URL", 100, "Die URL hat keine gültige Struktur (fehlendes Schema oder Domain).")],
+                "website_analysis": {"reachable": False, "errors": ["Ungültige URL"]},
+                "ai_explanation": "Diese URL ist ungültig und kann nicht analysiert werden. Stellen Sie sicher, dass sie mit http:// oder https:// beginnt und eine gültige Domain hat."
+            }
+    except Exception as e:
+        return {
+            "url": url,
+            "score": 0,
+            "status": "UNGÜLTIGE URL",
+            "color": "red",
+            "easy_explanation": ["URL-Parsing-Fehler"],
+            "details": [("URL-Fehler", 100, f"Fehler beim Parsen der URL: {str(e)}")],
+            "website_analysis": {"reachable": False, "errors": ["URL-Fehler"]},
+            "ai_explanation": f"Fehler beim Verarbeiten der URL: {str(e)}. Überprüfen Sie die URL-Syntax."
+        }
+
+    # �🔐 HTTPS (Critical)
     if not url.startswith("https://"):
         score -= 35
         details.append(("Keine sichere Verbindung (HTTP)", 35, "KRITISCH: Die Seite nutzt kein HTTPS. Daten werden unverschlüsselt übertragen - ideal für Diebe!"))
