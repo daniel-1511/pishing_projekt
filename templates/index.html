@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <summary><strong>🔍 Scan-Details</strong></summary>
     <ul>
         {% for name, points, reason in url_result.details %}
-        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        <li><strong>{{ name }}</strong>: {{ reason }}</li>
         {% endfor %}
     </ul>
 </details>
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {% if url_result.ai_explanation %}
 <details open>
     <summary><strong>🤖 KI-Erklärung</strong></summary>
-    <pre>{{ url_result.ai_explanation }}</pre>
+    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ url_result.ai_explanation }}</pre>
 </details>
 {% endif %}
 
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <summary><strong>📋 Analyse</strong></summary>
     <ul>
         {% for name, points, reason in sms_result.details %}
-        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        <li><strong>{{ name }}</strong>: {{ reason }}</li>
         {% endfor %}
     </ul>
 </details>
@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {% if sms_result.ai_explanation %}
 <details open>
     <summary><strong>🤖 KI-Erklärung</strong></summary>
-    <pre>{{ sms_result.ai_explanation }}</pre>
+    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ sms_result.ai_explanation }}</pre>
 </details>
 {% endif %}
 {% endif %}
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <summary><strong>📋 Analyse</strong></summary>
     <ul>
         {% for name, points, reason in email_result.details %}
-        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        <li><strong>{{ name }}</strong>: {{ reason }}</li>
         {% endfor %}
     </ul>
 </details>
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {% if email_result.ai_explanation %}
 <details open>
     <summary><strong>🤖 KI-Erklärung</strong></summary>
-    <pre>{{ email_result.ai_explanation }}</pre>
+    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ email_result.ai_explanation }}</pre>
 </details>
 {% endif %}
 {% endif %}
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <summary><strong>🔍 Analyse</strong></summary>
     <ul>
         {% for name, points, reason in phone_result.details %}
-        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        <li><strong>{{ name }}</strong>: {{ reason }}</li>
         {% endfor %}
     </ul>
 </details>
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {% if phone_result.ai_explanation %}
 <details open>
     <summary><strong>🤖 KI-Erklärung</strong></summary>
-    <pre>{{ phone_result.ai_explanation }}</pre>
+    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ phone_result.ai_explanation }}</pre>
 </details>
 {% endif %}
 {% endif %}
