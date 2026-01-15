@@ -197,6 +197,14 @@ document.addEventListener('DOMContentLoaded', function() {
     </ul>
 </details>
 {% endif %}
+
+{% if url_result.ai_explanation %}
+<details open>
+    <summary><strong>🤖 KI-Erklärung</strong></summary>
+    <pre>{{ url_result.ai_explanation }}</pre>
+</details>
+{% endif %}
+
 {% endif %}
 </div>
 
@@ -233,6 +241,12 @@ document.addEventListener('DOMContentLoaded', function() {
     </ul>
 </div>
 {% endif %}
+{% if sms_result.ai_explanation %}
+<details open>
+    <summary><strong>🤖 KI-Erklärung</strong></summary>
+    <pre>{{ sms_result.ai_explanation }}</pre>
+</details>
+{% endif %}
 {% endif %}
 </div>
 
@@ -252,6 +266,22 @@ document.addEventListener('DOMContentLoaded', function() {
         {{ email_result.score }}%
     </div>
 </div>
+{% if email_result.details %}
+<details open>
+    <summary><strong>📋 Analyse</strong></summary>
+    <ul>
+        {% for name, points, reason in email_result.details %}
+        <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
+{% if email_result.ai_explanation %}
+<details open>
+    <summary><strong>🤖 KI-Erklärung</strong></summary>
+    <pre>{{ email_result.ai_explanation }}</pre>
+</details>
+{% endif %}
 {% endif %}
 </div>
 
@@ -277,6 +307,12 @@ document.addEventListener('DOMContentLoaded', function() {
         <li><strong>{{ name }}</strong> (-{{ points }}): {{ reason }}</li>
         {% endfor %}
     </ul>
+</details>
+{% endif %}
+{% if phone_result.ai_explanation %}
+<details open>
+    <summary><strong>🤖 KI-Erklärung</strong></summary>
+    <pre>{{ phone_result.ai_explanation }}</pre>
 </details>
 {% endif %}
 {% endif %}

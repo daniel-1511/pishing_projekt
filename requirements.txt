@@ -8,3 +8,6 @@ pandas
 joblib
 openai
 python-dotenv
+ollama
+beautifulsoup4
+requests

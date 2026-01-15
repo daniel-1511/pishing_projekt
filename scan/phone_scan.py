@@ -1,4 +1,5 @@
 import re
+import ollama
 
 # 🚨 HARTE BLACKLIST – sofort Score 0
 BLACKLISTED_PHONE_NUMBERS = [
@@ -94,6 +95,32 @@ EXTREME_RISK_PREFIXES = [
     "+92",                 # Pakistan (Sextortion)
 ]
 
+# 🤖 KI-Erklärung und Score generieren mit Ollama
+def generate_ai_explanation_phone(phone_number, score, status, details):
+    prompt = f"Analysiere diese Telefonnummer auf Betrugsrisiken. Gib einen Score von 0-100 (0=extrem gefährlich, 100=vollkommen sicher) und erkläre kurz auf Deutsch, warum sie sicher oder gefährlich ist. Format: Score: [zahl]\nErklärung: [text]\n\nTelefonnummer: {phone_number}"
+    try:
+        response = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
+        content = response['message']['content'].strip()
+        
+        # Parse Score und Erklärung
+        lines = content.split('\n')
+        ai_score = score  # Fallback
+        explanation = content
+        
+        for line in lines:
+            if line.lower().startswith('score:'):
+                try:
+                    ai_score = int(line.split(':')[1].strip())
+                    ai_score = max(0, min(100, ai_score))  # Clamp 0-100
+                except:
+                    pass
+            elif line.lower().startswith('erklärung:'):
+                explanation = line.split(':', 1)[1].strip()
+                break
+        
+        return ai_score, explanation
+    except Exception as e:
+        return score, ""
 
 def scan_phone_number(phone_number: str):
     phone_number = phone_number.strip().lower()
@@ -102,8 +129,9 @@ def scan_phone_number(phone_number: str):
     # 🔴 EXTREM RISIKO: EXTREME_RISK_PREFIXES
     for prefix in EXTREME_RISK_PREFIXES:
         if phone_number.startswith(prefix.lower()):
+            ai_score, ai_explanation = generate_ai_explanation_phone(phone_number, 5, "EXTREM GEFÄHRLICH", [("Hochrisiko Landesprefix", 95, f"Nummer aus {HIGH_RISK_COUNTRIES.get(prefix, 'bekanntem Schwindel-Land')}. NICHT annehmen!")])
             return {
-                "score": 5,
+                "score": ai_score,
                 "status": "EXTREM GEFÄHRLICH",
                 "color": "#CC0000",
                 "details": [
@@ -113,13 +141,15 @@ def scan_phone_number(phone_number: str):
                         f"Nummer aus {HIGH_RISK_COUNTRIES.get(prefix, 'bekanntem Schwindel-Land')}. NICHT annehmen!"
                     )
                 ],
-                "risk_level": "EXTREME"
+                "risk_level": "EXTREME",
+                "ai_explanation": ai_explanation
             }
 
     # 🚫 ANONYM / UNBEKANNT → SOFORT GEFÄHRLICH
     if any(word in phone_number for word in ANONYMOUS_KEYWORDS):
+        ai_score, ai_explanation = generate_ai_explanation_phone(phone_number, 0, "EXTREM GEFÄHRLICH", [("Anonymer Anruf", 100, "Anonyme oder versteckte Nummern werden sehr häufig für Betrug oder Belästigung genutzt. Es wird dringend empfohlen, nicht ranzugehen.")])
         return {
-            "score": 0,
+            "score": ai_score,
             "status": "EXTREM GEFÄHRLICH",
             "color": "#CC0000",
             "details": [
@@ -130,13 +160,15 @@ def scan_phone_number(phone_number: str):
                     "Es wird dringend empfohlen, nicht ranzugehen."
                 )
             ],
-            "risk_level": "EXTREME"
+            "risk_level": "EXTREME",
+            "ai_explanation": ai_explanation
         }
 
     # 🚨 BLACKLIST CHECK
     if phone_number in BLACKLISTED_PHONE_NUMBERS:
+        ai_score, ai_explanation = generate_ai_explanation_phone(phone_number, 0, "EXTREM GEFÄHRLICH (BLACKLIST)", [("Nummer auf Blacklist", 100, "Diese Telefonnummer ist als betrügerisch bekannt und sollte blockiert werden.")])
         return {
-            "score": 0,
+            "score": ai_score,
             "status": "EXTREM GEFÄHRLICH (BLACKLIST)",
             "color": "#CC0000",
             "details": [
@@ -146,7 +178,8 @@ def scan_phone_number(phone_number: str):
                     "Diese Telefonnummer ist als betrügerisch bekannt und sollte blockiert werden."
                 )
             ],
-            "risk_level": "EXTREME"
+            "risk_level": "EXTREME",
+            "ai_explanation": ai_explanation
         }
 
     score = 100
@@ -249,21 +282,25 @@ def scan_phone_number(phone_number: str):
         ))
 
     score = max(score, 0)
+    # Initialer Status für KI-Prompt
+    status = "Unbekannt"
+    # � KI-Erklärung und Score generieren
+    ai_score, ai_explanation = generate_ai_explanation_phone(phone_number, score, status, details)
 
-    # 🧠 Status Bestimmung
-    if score <= 10:
+    # 🧠 Status basierend auf KI-Score
+    if ai_score <= 10:
         status = "🔴 EXTREM GEFÄHRLICH"
         color = "#CC0000"
         risk_level = "EXTREME"
-    elif score <= 30:
+    elif ai_score <= 30:
         status = "🔴 SEHR UNSICHER"
         color = "#FF0000"
         risk_level = "HIGH"
-    elif score <= 50:
+    elif ai_score <= 50:
         status = "🟠 UNSICHER"
         color = "#FF6600"
         risk_level = "MEDIUM"
-    elif score <= 70:
+    elif ai_score <= 70:
         status = "🟡 POTENTIELL GEFÄHRLICH"
         color = "#FFAA00"
         risk_level = "LOW"
@@ -273,9 +310,10 @@ def scan_phone_number(phone_number: str):
         risk_level = "SAFE"
 
     return {
-        "score": score,
+        "score": ai_score,
         "status": status,
         "color": color,
         "details": details,
-        "risk_level": risk_level
+        "risk_level": risk_level,
+        "ai_explanation": ai_explanation
     }

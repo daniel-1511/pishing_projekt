@@ -1,5 +1,6 @@
 import re
 from typing import Dict, List
+import ollama
 
 # PHISHING-SCHLÜSSELWÖRTER
 
@@ -232,6 +233,33 @@ def analyze_emoji_usage(text: str) -> Dict:
         }
     
     return {"count": len(emojis), "risk": None}
+
+# 🤖 KI-Erklärung und Score generieren mit Ollama
+def generate_ai_explanation_sms(sms_text, score, status, details):
+    prompt = f"Analysiere diese SMS auf Phishing-Risiken. Gib einen Score von 0-100 (0=extrem gefährlich, 100=vollkommen sicher) und erkläre kurz auf Deutsch, warum sie sicher oder gefährlich ist. Format: Score: [zahl]\nErklärung: [text]\n\nSMS: {sms_text}"
+    try:
+        response = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
+        content = response['message']['content'].strip()
+        
+        # Parse Score und Erklärung
+        lines = content.split('\n')
+        ai_score = score  # Fallback
+        explanation = content
+        
+        for line in lines:
+            if line.lower().startswith('score:'):
+                try:
+                    ai_score = int(line.split(':')[1].strip())
+                    ai_score = max(0, min(100, ai_score))  # Clamp 0-100
+                except:
+                    pass
+            elif line.lower().startswith('erklärung:'):
+                explanation = line.split(':', 1)[1].strip()
+                break
+        
+        return ai_score, explanation
+    except Exception as e:
+        return score, ""
 
 # SMS-ANALYSE
 
@@ -482,20 +510,26 @@ def scan_sms(sms_text: str) -> Dict:
 
     score = max(score, 0)
 
-    # ===== FINALES STATUS-RATING =====
-    if score <= 10 or high_risk_indicators >= 3:
+    # Initialer Status für KI-Prompt
+    status = "Unbekannt"
+
+    # 🤖 KI-Erklärung und Score generieren
+    ai_score, ai_explanation = generate_ai_explanation_sms(sms_text, score, status, details)
+
+    # 🧠 Status basierend auf KI-Score
+    if ai_score <= 10:
         status = "🔴🔴 EXTREM GEFÄHRLICH"
         color = "#CC0000"
         risk_level = "EXTREME"
-    elif score <= 25 or high_risk_indicators >= 2:
+    elif ai_score <= 25:
         status = "🔴 SEHR GEFÄHRLICH"
         color = "#FF0000"
         risk_level = "CRITICAL"
-    elif score <= 45 or high_risk_indicators >= 1:
+    elif ai_score <= 45:
         status = "🟠 GEFÄHRLICH"
         color = "#FF6600"
         risk_level = "HIGH"
-    elif score <= 70:
+    elif ai_score <= 70:
         status = "🟡 POTENTIELL GEFÄHRLICH"
         color = "#FFAA00"
         risk_level = "MEDIUM"
@@ -504,24 +538,8 @@ def scan_sms(sms_text: str) -> Dict:
         color = "#00CC00"
         risk_level = "LOW"
 
-    # ❗ AUTOMATISCHE DOWNGRADES
-    if (found["gewinn"] or found["gratis"]) and status in ["🟢 WAHRSCHEINLICH SICHER", "🟡 POTENTIELL GEFÄHRLICH"]:
-        status = "🟠 GEFÄHRLICH"
-        color = "#FF6600"
-        risk_level = "HIGH"
-
-    if found["familie"] and found["geld"] and status != "🔴 SEHR GEFÄHRLICH":
-        status = "🔴 SEHR GEFÄHRLICH"
-        color = "#FF0000"
-        risk_level = "CRITICAL"
-
-    if found["bank"] and found["druck"] and status != "🔴 SEHR GEFÄHRLICH":
-        status = "🔴 SEHR GEFÄHRLICH"
-        color = "#FF0000"
-        risk_level = "CRITICAL"
-
     return {
-        "score": score,
+        "score": ai_score,
         "status": status,
         "color": color,
         "details": sorted(details, key=lambda x: x[1], reverse=True),
@@ -530,7 +548,8 @@ def scan_sms(sms_text: str) -> Dict:
         "risk_level": risk_level,
         "high_risk_indicators_count": high_risk_indicators,
         "keywords_found": {k: v for k, v in found.items() if v},
-        "recommendation": _get_recommendation(risk_level, found)
+        "recommendation": _get_recommendation(risk_level, found),
+        "ai_explanation": ai_explanation
     }
 
 

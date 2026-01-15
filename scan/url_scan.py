@@ -3,6 +3,7 @@ import requests
 import traceback
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+import ollama
 
 # 🔍 Verdächtige Wörter in URL
 SUSPICIOUS_WORDS = [
@@ -66,29 +67,32 @@ HTTP_STATUS_MAP = {
 def http_status_text(code):
     return HTTP_STATUS_MAP.get(code, f"Unbekannter Status ({code})")
 
-# 🤖 KI-Erklärung generieren (statisch als Fallback)
-def generate_ai_explanation(score, status, details):
-    if score >= 80:
-        base = "Diese URL scheint sicher zu sein. Sie verwendet HTTPS, hat keine verdächtigen Merkmale und die Website ist erreichbar."
-    elif score >= 60:
-        base = "Die URL wirkt größtenteils sicher, aber es gibt einige Warnungen. Überprüfen Sie die Details sorgfältig."
-    elif score >= 40:
-        base = "Diese URL ist verdächtig. Es wurden mehrere potenzielle Risiken gefunden. Seien Sie vorsichtig!"
-    elif score >= 20:
-        base = "Hohes Risiko! Diese URL zeigt starke Anzeichen von Phishing oder Betrug."
-    else:
-        base = "Extrem gefährlich! Vermeiden Sie diese URL unbedingt – hohe Wahrscheinlichkeit eines Angriffs."
-
-    reasons = []
-    for name, points, reason in details[:3]:  # Top 3 Gründe
-        reasons.append(f"- {name}: {reason}")
-
-    if reasons:
-        explanation = f"{base}\n\nHauptgründe:\n" + "\n".join(reasons)
-    else:
-        explanation = base
-
-    return explanation
+# 🤖 KI-Erklärung und Score generieren mit Ollama
+def generate_ai_explanation(url, score, status, details):
+    prompt = f"Analysiere diese URL auf Phishing-Risiken. Gib einen Score von 0-100 (0=extrem gefährlich, 100=vollkommen sicher) und erkläre kurz auf Deutsch, warum sie sicher oder gefährlich ist. Format: Score: [zahl]\nErklärung: [text]\n\nURL: {url}"
+    try:
+        response = ollama.chat(model='llama3.2', messages=[{'role': 'user', 'content': prompt}])
+        content = response['message']['content'].strip()
+        
+        # Parse Score und Erklärung
+        lines = content.split('\n')
+        ai_score = score  # Fallback
+        explanation = content
+        
+        for line in lines:
+            if line.lower().startswith('score:'):
+                try:
+                    ai_score = int(line.split(':')[1].strip())
+                    ai_score = max(0, min(100, ai_score))  # Clamp 0-100
+                except:
+                    pass
+            elif line.lower().startswith('erklärung:'):
+                explanation = line.split(':', 1)[1].strip()
+                break
+        
+        return ai_score, explanation
+    except Exception as e:
+        return score, ""
 
 # 🌐 Website Analyse
 def analyze_website(url, debug=False):
@@ -175,26 +179,28 @@ def scan_url(url: str, debug=False):
     try:
         parsed = urlparse(url)
         if not parsed.scheme or not parsed.netloc:
+            ai_score, ai_explanation = 0, "Diese URL ist ungültig und kann nicht analysiert werden. Stellen Sie sicher, dass sie mit http:// oder https:// beginnt und eine gültige Domain hat."
             return {
                 "url": url,
-                "score": 0,
+                "score": ai_score,
                 "status": "UNGÜLTIGE URL",
                 "color": "red",
                 "easy_explanation": ["Ungültige URL-Struktur"],
                 "details": [("Ungültige URL", 100, "Die URL hat keine gültige Struktur (fehlendes Schema oder Domain).")],
                 "website_analysis": {"reachable": False, "errors": ["Ungültige URL"]},
-                "ai_explanation": "Diese URL ist ungültig und kann nicht analysiert werden. Stellen Sie sicher, dass sie mit http:// oder https:// beginnt und eine gültige Domain hat."
+                "ai_explanation": ai_explanation
             }
     except Exception as e:
+        ai_score, ai_explanation = 0, f"Fehler beim Verarbeiten der URL: {str(e)}. Überprüfen Sie die URL-Syntax."
         return {
             "url": url,
-            "score": 0,
+            "score": ai_score,
             "status": "UNGÜLTIGE URL",
             "color": "red",
             "easy_explanation": ["URL-Parsing-Fehler"],
             "details": [("URL-Fehler", 100, f"Fehler beim Parsen der URL: {str(e)}")],
             "website_analysis": {"reachable": False, "errors": ["URL-Fehler"]},
-            "ai_explanation": f"Fehler beim Verarbeiten der URL: {str(e)}. Überprüfen Sie die URL-Syntax."
+            "ai_explanation": ai_explanation
         }
 
     # �🔐 HTTPS (Critical)
@@ -255,15 +261,13 @@ def scan_url(url: str, debug=False):
         score -= penalty
         details.append(("Technische Fehler", penalty, "Mehrere Fehler gefunden: " + "; ".join(website["errors"])))
 
-    # 🔞 NSFW (höhere Strafe)
+    # 🔞 NSFW (nur Info, kein Punktabzug)
     if website["nsfw"]:
-        score -= 15
-        details.append(("Erwachsenen-Inhalte", 15, "Verdächtige Inhalte erkannt."))
+        details.append(("Erwachsenen-Inhalte", 0, "NSFW-Inhalte erkannt - keine Sicherheitswarnung, nur Info."))
 
-    # 🎰 Casino (höhere Strafe)
+    # 🎰 Casino (nur Info, kein Punktabzug)
     if website["casino"]:
-        score -= 20
-        details.append(("Casino/Glücksspiel", 20, "Glücksspiel-Inhalte - hohe Betrugsgefahr!"))
+        details.append(("Casino/Glücksspiel", 0, "Glücksspiel-Inhalte erkannt - keine Sicherheitswarnung, nur Info."))
 
     # ⚠️ Zu lange URL (common obfuscation)
     if len(url) > 100:
@@ -278,26 +282,33 @@ def scan_url(url: str, debug=False):
 
     score = max(score, 0)
 
-    # 🧠 Status (strengere Bewertung)
-    if score <= 15:
+    # Initialer Status für KI-Prompt
+    status = "Unbekannt"
+
+    # 🤖 KI-Erklärung und Score generieren
+    ai_score, ai_explanation = generate_ai_explanation(url, score, status, details)
+
+    # 🧠 Status basierend auf KI-Score
+    if ai_score <= 15:
         status, color = "EXTREM GEFÄHRLICH ⚠️", "red"
-    elif score <= 35:
+    elif ai_score <= 35:
         status, color = "SEHR GEFÄHRLICH", "orange"
-    elif score <= 55:
+    elif ai_score <= 55:
         status, color = "VERDÄCHTIG", "yellow"
-    elif score <= 75:
+    elif ai_score <= 75:
         status, color = "Eher sicher", "lightgreen"
     else:
         status, color = "Sicher", "green"
 
     return {
         "url": url,
-        "score": score,
+        "score": ai_score,
         "status": status,
         "color": color,
         "easy_explanation": list(set(easy_explanation)),
         "details": details,
-        "website_analysis": website
+        "website_analysis": website,
+        "ai_explanation": ai_explanation
     }
 
 # -----------------------------
