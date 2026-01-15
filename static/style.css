@@ -72,6 +72,12 @@ body {
     text-decoration: underline;
 }
 
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 /* GENERAL ELEMENTS */
 .box {
     background-color: var(--box);
@@ -173,40 +179,6 @@ input:checked + .slider {
 
 input:checked + .slider:before {
     transform: translateX(24px);
-}
-
-/* SIDEBAR */
-#menuSidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 300px;
-    height: 100%;
-    background-color: var(--box);
-    color: var(--text);
-    z-index: 2000;
-    padding: 20px;
-    border-right: 1px solid #ccc;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-}
-
-#menuSidebar.active {
-    transform: translateX(0);
-}
-
-#menuSidebar h3 {
-    margin-top: 0;
-}
-
-#menuSidebar .closeBtn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 20px;
 }
 
 details {

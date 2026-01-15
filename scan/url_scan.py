@@ -16,8 +16,6 @@ NSFW_KEYWORDS = ["porn", "xxx", "sex", "adult", "nude", "camgirl", "escort"]
 # 🎰 Casino / Glücksspiel
 CASINO_KEYWORDS = ["casino", "bet", "poker", "slot", "jackpot", "gambling", "roulette"]
 
-<<<<<<< HEAD
-=======
 # 🎣 Phishing-Domains (Ziele von Betrügern)
 PHISHING_DOMAINS = [
     "amazon", "apple", "google", "facebook", "microsoft", 
@@ -45,7 +43,6 @@ SUSPICIOUS_WORDS_EXTENDED = [
 SUSPICIOUS_WORDS = SUSPICIOUS_WORDS_EXTENDED
 
 # -----------------------------
->>>>>>> c18f32316df16e74cc56d89316db6f7f07383ae6
 # 🌐 HTTP STATUS TRANSLATION
 HTTP_STATUS_MAP = {
     200: "OK – Seite erfolgreich geladen.",
