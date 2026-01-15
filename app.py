@@ -5,24 +5,18 @@ from fastapi.staticfiles import StaticFiles
 from urllib.parse import urlparse
 import subprocess
 
-# =========================
 # SCANNER IMPORTE
-# =========================
 from scan.url_scan import scan_url
 from scan.sms_scan import scan_sms
 from scan.email_scan import scan_email
 from scan.phone_scan import scan_phone_number
 
-# =========================
 # APP SETUP
-# =========================
 app = FastAPI(title="CyberNet Security")
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# =========================
 # KI SYSTEM PROMPT (OLLAMA)
-# =========================
 SYSTEM_PROMPT = """
 Du bist ein IT-Sicherheitsassistent für Studierende.
 Deine Aufgaben:
@@ -38,9 +32,7 @@ Regeln:
 - Risiko als niedrig, mittel oder hoch bewerten
 """
 
-# ======================================================
 # TEMPLATE RENDER HELPER
-# ======================================================
 def render_index(request: Request, **kwargs):
     context = {
         "request": request,
@@ -65,16 +57,12 @@ def render_index(request: Request, **kwargs):
     context.update(kwargs)
     return templates.TemplateResponse("index.html", context)
 
-# ======================================================
 # STARTSEITE
-# ======================================================
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return render_index(request)
 
-# ======================================================
 # URL SCAN
-# ======================================================
 @app.post("/check", response_class=HTMLResponse)
 def check_url(request: Request, url: str = Form(...)):
     url = url.strip()

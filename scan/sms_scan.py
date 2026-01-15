@@ -1,9 +1,7 @@
 import re
 from typing import Dict, List
 
-# =====================================================
 # PHISHING-SCHLÜSSELWÖRTER
-# =====================================================
 
 PHISHING_KEYWORDS: Dict[str, List[str]] = {
 
@@ -51,9 +49,7 @@ PHISHING_KEYWORDS: Dict[str, List[str]] = {
     ]
 }
 
-# =====================================================
 # HILFSFUNKTIONEN
-# =====================================================
 
 def keyword_found(text: str, keyword: str) -> bool:
     if " " in keyword:
@@ -73,9 +69,7 @@ def highlight_suspicious_words(text: str, found: Dict[str, List[str]]) -> str:
             )
     return highlighted
 
-# =====================================================
 # SMS-ANALYSE
-# =====================================================
 
 def scan_sms(sms_text: str) -> Dict:
     score = 100
@@ -92,9 +86,7 @@ def scan_sms(sms_text: str) -> Dict:
 
     highlighted_text = highlight_suspicious_words(sms_text, found)
 
-    # =================================================
     # 🚨 FAMILIE
-    # =================================================
 
     family_verification = {
         "active": False,

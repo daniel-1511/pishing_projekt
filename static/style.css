@@ -1,10 +1,6 @@
-/* ============================================
-   CYBERNET SECURITY - COMPLETE STYLESHEET
-   ============================================ */
+/* CYBERNET SECURITY - COMPLETE STYLESHEET */
 
-/* ============================================
-   CSS VARIABLES
-   ============================================ */
+/* CSS VARIABLES */
 :root {
     --bg: #f5f5f5;
     --box: #ffffff;
@@ -17,9 +13,7 @@ body.dark {
     --text: #f5f5f5;
 }
 
-/* ============================================
-   GLOBAL STYLES
-   ============================================ */
+/* GLOBAL STYLES */
 body {
     font-family: Arial, sans-serif;
     background-color: var(--bg);
@@ -30,9 +24,7 @@ body {
     transition: background-color 0.5s, color 0.5s;
 }
 
-/* ============================================
-   NAVBAR
-   ============================================ */
+/* NAVBAR */
 .navbar {
     position: sticky;
     top: 0;
@@ -80,9 +72,7 @@ body {
     text-decoration: underline;
 }
 
-/* ============================================
-   GENERAL ELEMENTS
-   ============================================ */
+/* GENERAL ELEMENTS */
 .box {
     background-color: var(--box);
     padding: 20px;
@@ -118,9 +108,7 @@ input[type="text"], input[type="email"], textarea {
     color: var(--text);
 }
 
-/* ============================================
-   PROGRESS BARS
-   ============================================ */
+/* PROGRESS BARS */
 .bar {
     width: 100%;
     background-color: #cccccc;
@@ -144,9 +132,7 @@ input[type="text"], input[type="email"], textarea {
 .bar-inner.yellow { background-color: goldenrod; }
 .bar-inner.green { background-color: green; }
 
-/* ============================================
-   SWITCH / TOGGLE
-   ============================================ */
+/* SWITCH / TOGGLE */
 .switch {
     position: relative;
     display: inline-block;
@@ -189,9 +175,7 @@ input:checked + .slider:before {
     transform: translateX(24px);
 }
 
-/* ============================================
-   SIDEBAR
-   ============================================ */
+/* SIDEBAR */
 #menuSidebar {
     position: fixed;
     top: 0;
