@@ -172,33 +172,12 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endfor %}
     </ul>
 </details>
-{% if url_result.website_analysis %}
-<details>
-    <summary><strong>🌐 Website-Analyse</strong> (Score: {{ url_result.score }}%)</summary>
-    <div class="bar">
-        <div class="bar-inner {% if url_result.score <= 10 %}red{% elif url_result.score <= 30 %}orange{% elif url_result.score <= 60 %}yellow{% else %}green{% endif %}">
-            {{ url_result.score }}%
-        </div>
-    </div>
-    <ul>
-        <li>HTTP-Status: {{ url_result.website_analysis.http_status }}</li>
-        {% for err in url_result.website_analysis.errors %}
-            <li style="color:red;">❌ {{ err }}</li>
-        {% endfor %}
-        {% for warn in url_result.website_analysis.warnings %}
-            <li style="color:orange;">⚠️ {{ warn }}</li>
-        {% endfor %}
-        {% if url_result.website_analysis.nsfw %}
-            <li>🔞 NSFW-Inhalte erkannt</li>
-        {% endif %}
-        {% if url_result.website_analysis.casino %}
-            <li>🎰 Glücksspiel-Inhalte erkannt</li>
-        {% endif %}
-    </ul>
+{% if url_result.ai_explanation %}
+<details open>
+    <summary><strong>🤖 KI-Erklärung</strong></summary>
+    <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ url_result.ai_explanation }}</pre>
 </details>
 {% endif %}
-
-{% if url_result.ai_explanation %}
 <details open>
     <summary><strong>🤖 KI-Erklärung</strong></summary>
     <pre style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">{{ url_result.ai_explanation }}</pre>
