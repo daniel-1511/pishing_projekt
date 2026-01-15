@@ -16,6 +16,36 @@ NSFW_KEYWORDS = ["porn", "xxx", "sex", "adult", "nude", "camgirl", "escort"]
 # 🎰 Casino / Glücksspiel
 CASINO_KEYWORDS = ["casino", "bet", "poker", "slot", "jackpot", "gambling", "roulette"]
 
+<<<<<<< HEAD
+=======
+# 🎣 Phishing-Domains (Ziele von Betrügern)
+PHISHING_DOMAINS = [
+    "amazon", "apple", "google", "facebook", "microsoft", 
+    "paypal", "netflix", "instagram", "whatsapp", "telegram",
+    "twitter", "steam", "discord", "ebay", "dropbox"
+]
+
+# 🔗 URL-Verkürzer
+URL_SHORTENERS = [
+    "bit.ly", "tinyurl.com", "goo.gl", "short.link",
+    "ow.ly", "t.co", "buff.ly", "adf.ly", "rebrand.ly",
+    "s.click", "tiny.cc", "short.cm", "x.co"
+]
+
+# 🔍 Verdächtige Wörter (erweitert)
+SUSPICIOUS_WORDS_EXTENDED = [
+    "login", "verify", "account", "confirm", "signin", "auth",
+    "pay", "billing", "alert", "urgent", "action-required",
+    "update", "password", "secure", "bank", "free", "bonus",
+    "validate", "confirm-identity", "security-check", "click-here",
+    "limited-time", "act-now", "claim", "prize", "winner"
+]
+
+# Updatersuspicious_words mit erweiterten Begriffen
+SUSPICIOUS_WORDS = SUSPICIOUS_WORDS_EXTENDED
+
+# -----------------------------
+>>>>>>> c18f32316df16e74cc56d89316db6f7f07383ae6
 # 🌐 HTTP STATUS TRANSLATION
 HTTP_STATUS_MAP = {
     200: "OK – Seite erfolgreich geladen.",
