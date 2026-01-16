@@ -4,6 +4,7 @@ import traceback
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import ollama
+from difflib import SequenceMatcher
 
 # 🔍 Verdächtige Wörter in URL
 SUSPICIOUS_WORDS = [
@@ -31,6 +32,25 @@ URL_SHORTENERS = [
     "ow.ly", "t.co", "buff.ly", "adf.ly", "rebrand.ly",
     "s.click", "tiny.cc", "short.cm", "x.co"
 ]
+
+# 📋 Korrekte Domain-Mappings für Empfehlungen
+LEGITIMATE_DOMAINS = {
+    "amazon": {"url": "https://www.amazon.com", "name": "Amazon"},
+    "apple": {"url": "https://www.apple.com", "name": "Apple"},
+    "google": {"url": "https://www.google.com", "name": "Google"},
+    "facebook": {"url": "https://www.facebook.com", "name": "Facebook"},
+    "microsoft": {"url": "https://www.microsoft.com", "name": "Microsoft"},
+    "paypal": {"url": "https://www.paypal.com", "name": "PayPal"},
+    "netflix": {"url": "https://www.netflix.com", "name": "Netflix"},
+    "instagram": {"url": "https://www.instagram.com", "name": "Instagram"},
+    "whatsapp": {"url": "https://www.whatsapp.com", "name": "WhatsApp"},
+    "telegram": {"url": "https://telegram.org", "name": "Telegram"},
+    "twitter": {"url": "https://twitter.com", "name": "Twitter/X"},
+    "steam": {"url": "https://steampowered.com", "name": "Steam"},
+    "discord": {"url": "https://discord.com", "name": "Discord"},
+    "ebay": {"url": "https://www.ebay.com", "name": "eBay"},
+    "dropbox": {"url": "https://www.dropbox.com", "name": "Dropbox"}
+}
 
 # 🔍 Verdächtige Wörter (erweitert)
 SUSPICIOUS_WORDS_EXTENDED = [
@@ -67,12 +87,61 @@ HTTP_STATUS_MAP = {
 def http_status_text(code):
     return HTTP_STATUS_MAP.get(code, f"Unbekannter Status ({code})")
 
+# 🧠 Ähnlichkeits-Score zwischen zwei Strings
+def similarity_ratio(s1, s2):
+    """Berechnet die Ähnlichkeit zwischen zwei Strings (0.0 bis 1.0)"""
+    return SequenceMatcher(None, s1.lower(), s2.lower()).ratio()
+
+# 🔍 Typosquatting-Erkennung mit Empfehlungen
+def detect_typosquatting_and_suggest(url):
+    """
+    Erkennt verdächtige Domains und schlägt legitime Alternativen vor.
+    Gibt (gefährlich, empfehlungen_liste) zurück.
+    """
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower().replace("www.", "")
+    domain_without_tld = domain.rsplit(".", 1)[0]  # Domain ohne .com/.de etc
+    
+    suggestions = []
+    
+    # Prüfe jede legitime Domain
+    for legit_domain, legit_info in LEGITIMATE_DOMAINS.items():
+        # Direkte Treffer = nicht verdächtig
+        if legit_domain == domain_without_tld:
+            return False, None
+        
+        # Ähnlichkeitsprüfung (über 65% Match = verdächtig)
+        similarity = similarity_ratio(domain_without_tld, legit_domain)
+        if 0.65 <= similarity < 1.0:  # Ähnlich aber nicht identisch
+            suggestions.append({
+                "similarity": similarity,
+                "legitimate_url": legit_info["url"],
+                "legitimate_name": legit_info["name"],
+                "your_domain": domain,
+                "legit_domain": legit_domain
+            })
+    
+    if suggestions:
+        # Sortiere nach Ähnlichkeit (höchste zuerst)
+        suggestions.sort(key=lambda x: x["similarity"], reverse=True)
+        return True, suggestions
+    
+    return False, None
+
 # 🤖 KI-Erklärung und Score generieren mit Ollama
-def generate_ai_explanation(url, score, status, details):
+def generate_ai_explanation(url, score, status, details, suggestions=None):
+    suggestions_text = ""
+    if suggestions:
+        suggestions_text = "\n\n💡 EMPFEHLENSWERTE ALTERNATIVE(N):\n"
+        for i, sug in enumerate(suggestions[:3], 1):  # Top 3 Empfehlungen
+            similarity_percent = round(sug["similarity"] * 100)
+            suggestions_text += f"{i}. {sug['legitimate_name']}: {sug['legitimate_url']} ({similarity_percent}% Ähnlichkeit)\n"
+    
     prompt = f"""Du bist ein Website-Sicherheits-Profi. Erkläre diese URL wie zu einem Freund - EINFACH und VERSTÄNDLICH!
 
 URL: {url}
 Probleme gefunden: {', '.join([d[0] for d in details]) if details else 'Keine Probleme'}
+{suggestions_text}
 
 ANTWORTE GENAU IN DIESEM FORMAT (strukturiert und übersichtlich):
 
@@ -194,8 +263,9 @@ def scan_url(url: str, debug=False):
     score = 100
     details = []
     easy_explanation = []
+    suggestions = None
 
-    # � URL-Validierung
+    # ✅ URL-Validierung
     try:
         parsed = urlparse(url)
         if not parsed.scheme or not parsed.netloc:
@@ -208,7 +278,8 @@ def scan_url(url: str, debug=False):
                 "easy_explanation": ["Ungültige URL-Struktur"],
                 "details": [("Ungültige URL", 100, "Die URL hat keine gültige Struktur (fehlendes Schema oder Domain).")],
                 "website_analysis": {"reachable": False, "errors": ["Ungültige URL"]},
-                "ai_explanation": ai_explanation
+                "ai_explanation": ai_explanation,
+                "suggestions": None
             }
     except Exception as e:
         ai_score, ai_explanation = 0, f"Fehler beim Verarbeiten der URL: {str(e)}. Überprüfen Sie die URL-Syntax."
@@ -220,10 +291,19 @@ def scan_url(url: str, debug=False):
             "easy_explanation": ["URL-Parsing-Fehler"],
             "details": [("URL-Fehler", 100, f"Fehler beim Parsen der URL: {str(e)}")],
             "website_analysis": {"reachable": False, "errors": ["URL-Fehler"]},
-            "ai_explanation": ai_explanation
+            "ai_explanation": ai_explanation,
+            "suggestions": None
         }
 
-    # �🔐 HTTPS (Critical)
+    # 🔍 TYPOSQUATTING-PRÜFUNG mit KI-Empfehlungen
+    is_suspicious, suggestions = detect_typosquatting_and_suggest(url)
+    if is_suspicious and suggestions:
+        score -= 50
+        suggestion_names = ", ".join([s["legitimate_name"] for s in suggestions[:3]])
+        details.append((f"Verdächtige Domain-Ähnlichkeit erkannt", 50, f"Diese Domain ähnelt: {suggestion_names}. Betrüger verwenden ähnliche Namen wie echte Seiten!"))
+        easy_explanation.append(f"⚠️ Verdächtige Ähnlichkeit zu: {suggestion_names}")
+
+    # 🔐 HTTPS (Critical)
     if not url.startswith("https://"):
         score -= 35
         details.append(("Keine sichere Verbindung (HTTP)", 35, "KRITISCH: Die Seite nutzt kein HTTPS. Daten werden unverschlüsselt übertragen - ideal für Diebe!"))
@@ -241,7 +321,7 @@ def scan_url(url: str, debug=False):
         details.append(("URL-Verkürzer verwendet", 40, "Phishing-Methode: Die echte Adresse ist versteckt. Vorsicht!"))
         easy_explanation.append("⚠️ URL-Verkürzer erkannt - versteckte Zielseite!")
 
-    # 🎣 Domain-Typosquatting
+    # 🎣 Domain-Typosquatting (explizite Variationen)
     for phishing_domain in PHISHING_DOMAINS:
         if phishing_domain in url.lower():
             # Check for variations
@@ -261,7 +341,7 @@ def scan_url(url: str, debug=False):
     # ⚠️ Verdächtige Wörter in URL (erhöht)
     found = [w for w in SUSPICIOUS_WORDS if w in url.lower()]
     if found:
-        deduction = len(found) * 8  # Erhöht von 5 zu 8
+        deduction = len(found) * 8
         score -= deduction
         details.append(("Verdächtige Begriffe in URL", deduction, f"Typische Phishing-Wörter: {', '.join(found)}"))
         easy_explanation.append(f"⚠️ Verdächtige Wörter: {', '.join(found[:2])}")
@@ -305,8 +385,8 @@ def scan_url(url: str, debug=False):
     # Initialer Status für KI-Prompt
     status = "Unbekannt"
 
-    # 🤖 KI-Erklärung und Score generieren
-    ai_score, ai_explanation = generate_ai_explanation(url, score, status, details)
+    # 🤖 KI-Erklärung und Score generieren (mit Empfehlungen)
+    ai_score, ai_explanation = generate_ai_explanation(url, score, status, details, suggestions)
 
     # 🧠 Status basierend auf KI-Score
     if ai_score <= 15:
@@ -328,7 +408,8 @@ def scan_url(url: str, debug=False):
         "easy_explanation": list(set(easy_explanation)),
         "details": details,
         "website_analysis": website,
-        "ai_explanation": ai_explanation
+        "ai_explanation": ai_explanation,
+        "suggestions": suggestions
     }
 
 # -----------------------------

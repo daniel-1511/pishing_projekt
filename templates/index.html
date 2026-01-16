@@ -160,6 +160,21 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endfor %}
     </ul>
 </details>
+{% if url_result.suggestions %}
+<div class="suggestions-container" style="background-color: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 8px; margin: 15px 0;">
+    <h4 style="color: #856404; margin-top: 0;">💡 Verdächtige Domain erkannt - Empfehlenswerte Alternativen:</h4>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+    {% for suggestion in url_result.suggestions %}
+        <li style="margin: 8px 0;">
+            <strong>{{ suggestion.legitimate_name }}</strong> ({{ (suggestion.similarity * 100)|int }}% Ähnlichkeit)
+            <br><a href="{{ suggestion.legitimate_url }}" target="_blank" style="color: #0066cc; text-decoration: none;">{{ suggestion.legitimate_url }}</a>
+        </li>
+    {% endfor %}
+    </ul>
+    <p style="font-size: 0.9em; color: #666; margin-bottom: 0;">✓ Benutze immer die offizielle Domain - Betrüger nutzen ähnlich klingende Adressen!</p>
+</div>
+{% endif %}
+
 {% if url_result.ai_explanation %}
 <div class="ai-explanation-container">
     <strong>🤖 KI-Erklärung</strong>
